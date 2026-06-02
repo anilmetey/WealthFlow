@@ -1,0 +1,84 @@
+@model IEnumerable<WealthFlow.Application.DTOs.CategoryDto>
+@{
+    ViewData["Title"] = "Kategoriler";
+    ViewData["PageTitle"] = "Kategori Yönetimi";
+}
+
+<div class="glass-card mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="card-title-custom">İşlem Kategorileri</h2>
+        <p class="text-muted">Gelir ve giderlerinizi gruplamak için özel kategoriler tanımlayın.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-indigo">
+        <i class="fa-solid fa-plus me-1"></i> Yeni Kategori
+    </a>
+</div>
+
+<div class="row g-4">
+    @if (Model.Any())
+    {
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-3" id="card-@item.Id">
+                <div class="glass-card h-100 category-card d-flex flex-column justify-content-between">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="category-avatar me-3" style="background-color: @(item.Color)20; border: 1px solid @item.Color; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid @item.Icon fs-4" style="color: @item.Color;"></i>
+                        </div>
+                        <div>
+                            <h3 class="category-name text-white mb-0 fs-6">@item.Name</h3>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top border-dark-subtle mt-3">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-icon btn-sm btn-outline-info" title="Düzenle">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        
+                        <button type="button" class="btn btn-icon btn-sm btn-outline-danger" title="Sil" onclick="deleteCategory(@item.Id)">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12 text-center py-5 text-muted glass-card">
+            <i class="fa-solid fa-tags fs-1 mb-2 opacity-50"></i>
+            <p>Sistemde henüz kategori tanımlanmamış.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function deleteCategory(id) {
+            if (confirm("Bu kategoriyi silmek istediğinizden emin misiniz?")) {
+                fetch(`/api/categories/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(async res => {
+                    const data = await res.json();
+                    if (res.ok) {
+                        const card = document.getElementById(`card-${id}`);
+                        if (card) {
+                            card.style.transition = 'all 0.3s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.8)';
+                            setTimeout(() => card.remove(), 300);
+                        }
+                    } else {
+                        // Backend validation error (e.g. category has transactions)
+                        alert(data.message || "Kategori silinemedi.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Hata:", err);
+                    alert("Ağ hatası oluştu.");
+                });
+            }
+        }
+    </script>
+}

@@ -1,0 +1,468 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Giriş Yap - WealthFlow</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-bg: #060913;
+            --color-card-bg: rgba(13, 17, 30, 0.45);
+            --color-primary: #6366f1;
+            --color-primary-hover: #4f46e5;
+            --color-primary-glow: rgba(99, 102, 241, 0.15);
+            --color-border: rgba(255, 255, 255, 0.05);
+            --font-heading: 'Outfit', 'Inter', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: var(--font-body);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            position: relative;
+            padding: 2rem 1rem;
+        }
+
+        /* Animated Backdrop Gradients */
+        .backdrop-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(0,0,0,0) 70%);
+            filter: blur(50px);
+            z-index: -1;
+            animation: pulseGlow 15s infinite alternate ease-in-out;
+        }
+
+        .glow-1 {
+            top: -10%;
+            left: -10%;
+        }
+
+        .glow-2 {
+            bottom: -15%;
+            right: -10%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(0,0,0,0) 70%);
+        }
+
+        @@keyframes pulseGlow {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.15) translate(30px, 30px); }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 1.5rem;
+            z-index: 10;
+            margin: auto 0;
+        }
+
+        .glass-card {
+            background: var(--color-card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--color-border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 25px rgba(99, 102, 241, 0.05);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .brand-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .brand-logo i {
+            font-size: 2.2rem;
+            color: var(--color-primary);
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.4));
+            margin-bottom: 0.5rem;
+            animation: spinSlow 8s infinite linear;
+        }
+
+        .brand-name {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: #fff;
+            letter-spacing: -0.5px;
+            margin-top: 0.5rem;
+        }
+
+        .brand-name span {
+            color: var(--color-primary);
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            background-color: rgba(15, 23, 42, 0.6) !important;
+            border: 1px solid var(--color-border) !important;
+            color: #fff !important;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--color-primary-glow) !important;
+            border-color: var(--color-primary) !important;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            font-family: var(--font-heading);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .form-check-input {
+            background-color: rgba(15, 23, 42, 0.6);
+            border-color: var(--color-border);
+            cursor: pointer;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .form-check-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .footer-link {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .footer-link a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .footer-link a:hover {
+            color: var(--color-primary-hover);
+            text-decoration: underline;
+        }
+
+        .validation-summary-errors {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.82rem;
+            color: #f87171;
+        }
+
+        .validation-summary-errors ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        /* Created by Anıl Mete Badge */
+        .created-by-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 1.2rem;
+            border-radius: 50px;
+            background: rgba(13, 17, 30, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.05);
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            cursor: default;
+            transition: all 0.3s ease;
+            animation: borderGlowPulse 4s infinite alternate ease-in-out;
+        }
+
+        .created-by-badge strong {
+            color: #ffffff;
+            margin-left: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .created-by-badge:hover {
+            transform: scale(1.05);
+            border-color: var(--color-primary) !important;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+        }
+
+        .created-by-badge:hover strong {
+            color: var(--color-primary);
+        }
+
+        @@keyframes borderGlowPulse {
+            0% {
+                border-color: rgba(99, 102, 241, 0.2);
+                box-shadow: 0 0 10px rgba(99, 102, 241, 0.05);
+            }
+            50% {
+                border-color: rgba(16, 185, 129, 0.3);
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+            }
+            100% {
+                border-color: rgba(6, 182, 212, 0.3);
+                box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+            }
+        }
+
+        /* Splash Screen styling */
+        .app-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #060913;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            opacity: 1;
+            visibility: visible;
+        }
+        .splash-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.8rem;
+        }
+        .splash-sphere {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotateGlobe 12s infinite linear;
+        }
+        .sphere-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(16, 185, 129, 0.45); /* Emerald matching theme */
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+        }
+        .sphere-line:nth-child(1) { transform: rotateY(0deg); }
+        .sphere-line:nth-child(2) { transform: rotateY(36deg); }
+        .sphere-line:nth-child(3) { transform: rotateY(72deg); }
+        .sphere-line:nth-child(4) { transform: rotateY(108deg); }
+        .sphere-line:nth-child(5) { transform: rotateY(144deg); }
+        .sphere-line:nth-child(6) { transform: rotateX(90deg); }
+        .sphere-line:nth-child(7) { transform: rotateX(45deg); }
+        .sphere-line:nth-child(8) { transform: rotateX(135deg); }
+
+        @@keyframes rotateGlobe {
+            0% {
+                transform: rotateX(15deg) rotateY(0deg) rotateZ(0deg);
+            }
+            100% {
+                transform: rotateX(15deg) rotateY(360deg) rotateZ(360deg);
+            }
+        }
+        .splash-brand {
+            font-family: 'Outfit', 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 2.4rem;
+            color: #fff;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+        .splash-brand span {
+            color: #6366f1;
+            background: linear-gradient(135deg, #6366f1, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .splash-subtitle {
+            font-family: 'Inter', sans-serif;
+            color: #64748b;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            animation: pulseText 1.5s infinite ease-in-out;
+            margin: 0;
+        }
+        @@keyframes pulseText {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="appSplash" class="app-splash">
+        <div class="splash-content">
+            <div class="splash-sphere">
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+            </div>
+            <div class="splash-brand">Wealth<span>Flow</span></div>
+            <div class="splash-subtitle">Finansal sinyaller hazırlanıyor...</div>
+        </div>
+    </div>
+    <script>
+        if (sessionStorage.getItem('wealthflow_splash_shown')) {
+            document.getElementById('appSplash').style.display = 'none';
+        }
+    </script>
+
+    <div class="backdrop-glow glow-1"></div>
+    <div class="backdrop-glow glow-2"></div>
+
+    <div class="login-container">
+        <div class="glass-card">
+            <div class="brand-logo">
+                <i class="fa-solid fa-chart-line"></i>
+                <div class="brand-name">Wealth<span>Flow</span></div>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success border-0 bg-success-soft text-success fs-8 rounded p-2 mb-3" style="background: rgba(16, 185, 129, 0.08);">
+                    <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+                </div>
+            }
+
+            <form asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">E-posta Adresi</label>
+                    <input type="email" name="email" class="form-control" placeholder="adiniz@ornek.com" required autocomplete="email" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Şifre</label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="passwordInput" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;" />
+                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-left: none !important; border-color: var(--color-border) !important; background: rgba(15, 23, 42, 0.6); color: #94a3b8; transition: none;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input type="checkbox" name="rememberMe" value="true" class="form-check-input" id="rememberMe" />
+                        <label class="form-check-label" for="rememberMe">Beni Hatırla</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Oturum Aç</button>
+            </form>
+
+            <div class="footer-link">
+                Hesabınız yok mu? <a asp-action="Register">Kayıt Olun</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Created by Anıl Mete Footer -->
+    <div class="d-flex justify-content-center mt-auto pb-3" style="z-index: 10;">
+        <div class="created-by-badge">
+            <span>Created by <strong>Anıl Mete</strong></span>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Handle Splash Screen fade-out
+        document.addEventListener("DOMContentLoaded", function() {
+            const splash = document.getElementById('appSplash');
+            if (splash && splash.style.display !== 'none') {
+                setTimeout(() => {
+                    splash.style.transition = 'opacity 0.6s ease, visibility 0.6s ease';
+                    splash.style.opacity = '0';
+                    splash.style.visibility = 'hidden';
+                    sessionStorage.setItem('wealthflow_splash_shown', 'true');
+                    setTimeout(() => {
+                        splash.remove();
+                    }, 600);
+                }, 1800);
+            }
+        });
+
+        const passwordInput = document.getElementById('passwordInput');
+        const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+        if (togglePasswordBtn && passwordInput) {
+            togglePasswordBtn.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                const icon = this.querySelector('i');
+                if (type === 'password') {
+                    icon.className = 'fa-solid fa-eye';
+                } else {
+                    icon.className = 'fa-solid fa-eye-slash';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

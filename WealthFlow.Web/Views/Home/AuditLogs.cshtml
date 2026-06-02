@@ -1,0 +1,157 @@
+@{
+    ViewData["Title"] = "Sistem Günlüğü";
+    ViewData["PageTitle"] = "Denetim Kayıtları";
+}
+
+<div class="glass-card mb-4 border-glow">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2 class="card-title-custom">Sistem İşlem Geçmişi</h2>
+            <p class="text-muted">Hesaplar arası transferler ve bütçe/harcama kayıtları üzerinde yapılan tüm işlemlerin kronolojik listesi.</p>
+        </div>
+        <button class="btn btn-outline-light btn-sm" id="btnRefreshLogs">
+            <i class="fa-solid fa-arrows-rotate me-1"></i> Güncelle
+        </button>
+    </div>
+</div>
+
+<div class="glass-card">
+    <div class="timeline-container" id="timelineList">
+        <p class="text-muted text-center py-5">Günlük kayıtları yükleniyor...</p>
+    </div>
+</div>
+
+<style>
+    .timeline-container {
+        position: relative;
+        padding-left: 30px;
+        border-left: 2px solid rgba(255, 255, 255, 0.05);
+        margin: 10px 0;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+        animation: slideDown 0.3s ease;
+    }
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -37px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--color-indigo);
+        border: 3px solid var(--bg-app);
+        box-shadow: 0 0 8px var(--color-indigo);
+    }
+    .timeline-item.action-eklendi::before {
+        background: var(--color-success);
+        box-shadow: 0 0 8px var(--color-success);
+    }
+    .timeline-item.action-silindi::before {
+        background: var(--color-danger);
+        box-shadow: 0 0 8px var(--color-danger);
+    }
+    .timeline-item.action-transferi::before {
+        background: var(--color-info);
+        box-shadow: 0 0 8px var(--color-info);
+    }
+    .timeline-time {
+        font-size: 0.72rem;
+        color: var(--text-muted-dark);
+        font-weight: 500;
+    }
+    .timeline-content-card {
+        background: rgba(10, 15, 30, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 0.25rem;
+        transition: all 0.2s ease;
+    }
+    .timeline-content-card:hover {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(10, 15, 30, 0.6);
+    }
+    .timeline-action {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--text-white);
+    }
+    .timeline-details {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+        line-height: 1.4;
+    }
+    .timeline-user {
+        font-size: 0.68rem;
+        color: var(--color-indigo);
+        font-weight: 600;
+        margin-top: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+</style>
+
+<script>
+    (function() {
+        function loadLogs() {
+            const container = document.getElementById('timelineList');
+            if (!container) return;
+            
+            fetch('/api/auditlogs?limit=40')
+                .then(res => res.json())
+                .then(data => {
+                    container.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(log => {
+                            const date = new Date(log.timestamp);
+                            const dateFormatted = date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' }) + ' - ' + date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                            
+                            let actionClass = 'action-general';
+                            if (log.action.toLowerCase().includes('ekle')) actionClass = 'action-eklendi';
+                            if (log.action.toLowerCase().includes('sil')) actionClass = 'action-silindi';
+                            if (log.action.toLowerCase().includes('transfer')) actionClass = 'action-transferi';
+                            
+                            container.innerHTML += `
+                                <div class="timeline-item ${actionClass}">
+                                    <span class="timeline-time">${dateFormatted}</span>
+                                    <div class="timeline-content-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="timeline-action">${log.action}</span>
+                                            <span class="timeline-user"><i class="fa-solid fa-user-shield"></i> ${log.user}</span>
+                                        </div>
+                                        <p class="timeline-details mb-0">${log.details}</p>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        container.innerHTML = `<p class="text-muted text-center py-5">Henüz sistem günlüğü kaydı bulunmuyor.</p>`;
+                    }
+                    
+                    if (typeof window.animateCards === "function") {
+                        window.animateCards();
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    container.innerHTML = `<p class="text-danger text-center py-5">Loglar yüklenirken hata oluştu.</p>`;
+                });
+        }
+        
+        loadLogs();
+        
+        const btnRefresh = document.getElementById('btnRefreshLogs');
+        if (btnRefresh) {
+            btnRefresh.addEventListener('click', loadLogs);
+        }
+    })();
+</script>

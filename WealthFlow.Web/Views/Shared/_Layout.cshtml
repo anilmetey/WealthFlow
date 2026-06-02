@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="tr" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WealthFlow</title>
+    
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Premium Custom Styles -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <!-- Accent Theme Loader -->
+    <script>
+        (function() {
+            const accent = localStorage.getItem("wealthflow_accent") || "indigo";
+            const themes = {
+                indigo: { primary: "#6366f1", hover: "#4f46e5", soft: "rgba(99, 102, 241, 0.15)" },
+                emerald: { primary: "#10b981", hover: "#059669", soft: "rgba(16, 185, 129, 0.15)" },
+                cyan: { primary: "#06b6d4", hover: "#0891b2", soft: "rgba(6, 182, 212, 0.15)" },
+                rose: { primary: "#f43f5e", hover: "#e11d48", soft: "rgba(244, 63, 94, 0.15)" }
+            };
+            const t = themes[accent] || themes.indigo;
+            document.documentElement.style.setProperty('--color-indigo', t.primary);
+            document.documentElement.style.setProperty('--color-indigo-hover', t.hover);
+            document.documentElement.style.setProperty('--color-indigo-soft', t.soft);
+        })();
+    </script>
+</head>
+<body class="dark-theme">
+    <!-- Splash Screen -->
+    <div id="appSplash" class="app-splash">
+        <div class="splash-content">
+            <div class="splash-sphere">
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+                <div class="sphere-line"></div>
+            </div>
+            <div class="splash-brand">Wealth<span>Flow</span></div>
+            <div class="splash-subtitle">Finansal sinyaller hazırlanıyor...</div>
+        </div>
+    </div>
+    <script>
+        if (sessionStorage.getItem('wealthflow_splash_shown')) {
+            document.getElementById('appSplash').style.display = 'none';
+        }
+    </script>
+
+    <!-- Page Transition Curtain -->
+    <div class="page-loader-curtain" id="pageLoaderCurtain">
+        <div class="spinner-border text-indigo" role="status">
+            <span class="visually-hidden">Yükleniyor...</span>
+        </div>
+    </div>
+
+    <!-- Floating Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" style="z-index: 1200;"></div>
+
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <div class="sidebar-brand wealthflow-brand-anim">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-chart-line text-indigo"></i>
+                </div>
+                <span class="brand-text">Wealth<span>Flow</span></span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Transactions" ? "active" : "")" asp-controller="Transactions" asp-action="Index">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>İşlemler</span>
+                </a>
+                <a class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Budgets" ? "active" : "")" asp-controller="Budgets" asp-action="Index">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Bütçe Planı</span>
+                </a>
+                <a class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Categories" ? "active" : "")" asp-controller="Categories" asp-action="Index">
+                    <i class="fa-solid fa-tags"></i>
+                    <span>Kategoriler</span>
+                </a>
+                <a class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")" asp-controller="Home" asp-action="AuditLogs">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Sistem Günlüğü</span>
+                </a>
+                
+            </nav>
+            
+            <div class="sidebar-footer position-relative">
+                <div class="user-profile dropdown" style="cursor: pointer;" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="avatar">@(User.FindFirst("Avatar")?.Value ?? "U")</div>
+                    <div class="user-info">
+                        <p class="user-name">@(User.Identity?.Name ?? "Misafir")</p>
+                        <p class="user-role">Kullanıcı <i class="fa-solid fa-chevron-up ms-1 fs-9 opacity-50"></i></p>
+                    </div>
+                </div>
+                <ul class="dropdown-menu dropdown-menu-dark glass-card border border-dark-subtle shadow-lg" aria-labelledby="userProfileDropdown" style="width: 200px; padding: 0.5rem; background: #0c0f1d; border-radius: 10px; margin-bottom: 10px; z-index: 1000;">
+                    <li>
+                        <a class="dropdown-item py-2 rounded text-white fs-8 d-flex align-items-center gap-2" href="/Account/Profile">
+                            <i class="fa-solid fa-user-gear text-indigo"></i>Profil Ayarları
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider border-secondary opacity-25"></li>
+                    <li>
+                        <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item py-2 rounded text-danger fs-8 d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start">
+                                <i class="fa-solid fa-right-from-bracket"></i>Çıkış Yap
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- Header/Top Bar -->
+            <header class="app-header">
+                <div class="header-title">
+                    <h1 id="pageMainHeader">@ViewData["PageTitle"]</h1>
+                    <p style="color: #8fa5c0; margin: 0.25rem 0 0 0; font-size: 0.9rem;">Finansal hedeflerinizi yönetin ve analiz edin.</p>
+                </div>
+                
+                <div class="header-actions d-flex align-items-center gap-3">
+                    <!-- Accent Theme Switcher -->
+                    <div class="theme-switcher d-flex gap-2 align-items-center me-1 p-1 px-2 glass-card border-0" style="border-radius: 20px; background: rgba(20, 27, 47, 0.45); border: 1px solid rgba(255,255,255,0.03) !important;">
+                        <span style="color: #8fa5c0; font-size: 0.65rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;" class="d-none d-md-inline">Tema</span>
+                        <button type="button" class="theme-dot-btn" data-accent="indigo" style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid transparent; background-color: #6366f1; cursor: pointer; padding: 0; box-shadow: 0 0 8px rgba(99, 102, 241, 0.35);" title="Indigo"></button>
+                        <button type="button" class="theme-dot-btn" data-accent="emerald" style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid transparent; background-color: #10b981; cursor: pointer; padding: 0;" title="Zümrüt"></button>
+                        <button type="button" class="theme-dot-btn" data-accent="cyan" style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid transparent; background-color: #06b6d4; cursor: pointer; padding: 0;" title="Siyan"></button>
+                        <button type="button" class="theme-dot-btn" data-accent="rose" style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid transparent; background-color: #f43f5e; cursor: pointer; padding: 0;" title="Gül"></button>
+                    </div>
+
+                    <!-- Notification Hub Bell -->
+                    <div class="notification-hub dropdown">
+                        <button class="btn btn-outline-light btn-icon position-relative" type="button" id="notificationBellBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-regular fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" id="notificationBadge" style="display:none; font-size: 0.6rem; padding: 0.25em 0.4em;">0</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-dark glass-card notification-dropdown" aria-labelledby="notificationBellBtn" style="width: 320px; padding: 1rem; border-color: rgba(255,255,255,0.08); background: #0c0f1d; border-radius: 12px; margin-top: 8px;">
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dark-subtle pb-2 mb-2">
+                                <h6 class="mb-0 text-white fw-bold fs-7">Bildirimler</h6>
+                                <button type="button" class="btn btn-link btn-sm text-indigo p-0 fs-8 text-decoration-none" id="clearNotificationsBtn">Temizle</button>
+                            </div>
+                            <div class="notification-list-hub" style="max-height: 250px; overflow-y: auto;">
+                                <p class="text-muted text-center py-4 fs-8 mb-0" id="noNotificationsText">Yeni bildirim bulunmuyor.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-indigo" data-bs-toggle="modal" data-bs-target="#quickTransactionModal">
+                        <i class="fa-solid fa-plus me-2"></i>Yeni İşlem
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-body" id="spaContentBody">
+                @RenderBody()
+
+                <!-- Created by Anıl Mete Footer -->
+                <div class="d-flex justify-content-center mt-auto pt-5 pb-2">
+                    <div class="created-by-badge">
+                        <span>Created by <strong>Anıl Mete</strong></span>
+                    </div>
+                </div>
+
+                @RenderSection("Scripts", required: false)
+            </div>
+        </main>
+    </div>
+
+    <!-- Quick Transaction Modal -->
+    <div class="modal fade custom-modal" id="quickTransactionModal" tabindex="-1" aria-labelledby="quickTransactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickTransactionModalLabel">Hızlı İşlem Ekle</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="quickTransactionForm">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Açıklama</label>
+                            <input name="Description" class="form-control" placeholder="Örn: Market Alışverişi, Maaş Ödemesi" required maxlength="100" />
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Miktar (₺)</label>
+                                <input name="Amount" type="number" step="0.01" class="form-control" placeholder="0.00" required min="0.01" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tarih</label>
+                                <input name="Date" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">İşlem Türü</label>
+                                <select name="Type" class="form-select" required>
+                                    <option value="1">Gider (Çıkış)</option>
+                                    <option value="0">Gelir (Giriş)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Cüzdan / Hesap</label>
+                                <select name="WalletId" id="quickTxWalletSelect" class="form-select" required>
+                                    <option value="">Yükleniyor...</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Kategori</label>
+                            <select name="CategoryId" id="quickTxCategorySelect" class="form-select" required>
+                                <option value="">Yükleniyor...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <button type="submit" class="btn btn-indigo">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- site.js -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        // Global Bildirimler & Toasts (Event Hub)
+        const notificationsKey = "wealthflow_notifs";
+        
+        function getNotifications() {
+            return JSON.parse(localStorage.getItem(notificationsKey) || "[]");
+        }
+
+        function saveNotifications(notifs) {
+            localStorage.setItem(notificationsKey, JSON.stringify(notifs));
+        }
+
+        window.showToast = function(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            let bgClass = 'bg-dark border-indigo';
+            let iconClass = 'fa-circle-info text-info';
+            if (type === 'success') { bgClass = 'bg-dark border-success'; iconClass = 'fa-circle-check text-success'; }
+            if (type === 'danger') { bgClass = 'bg-dark border-danger'; iconClass = 'fa-circle-exclamation text-danger'; }
+            if (type === 'warning') { bgClass = 'bg-dark border-warning'; iconClass = 'fa-triangle-exclamation text-warning'; }
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                    <div class="d-flex p-2">
+                        <div class="toast-body d-flex align-items-center gap-2">
+                            <i class="fa-solid ${iconClass} fs-5"></i>
+                            <span>${message}</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            const toastEl = document.getElementById(toastId);
+            const bsToast = new bootstrap.Toast(toastEl);
+            bsToast.show();
+            
+            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+        };
+
+        window.addNotification = function(message, type = 'info') {
+            const notifs = getNotifications();
+            const newNotif = {
+                id: Date.now(),
+                message: message,
+                type: type,
+                date: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+            };
+            notifs.unshift(newNotif);
+            saveNotifications(notifs.slice(0, 10)); 
+            renderNotifications();
+            
+            // Toaster göster
+            window.showToast(message, type);
+
+            // Zili sallandır
+            const bell = document.querySelector('#notificationBellBtn i');
+            if (bell) {
+                bell.classList.remove('fa-regular');
+                bell.classList.add('fa-solid', 'text-warning');
+                bell.style.animation = 'pulseGlow 0.5s 3';
+            }
+        };
+
+        function renderNotifications() {
+            const notifs = getNotifications();
+            const badge = document.getElementById('notificationBadge');
+            const listHub = document.querySelector('.notification-list-hub');
+            const noNotifText = document.getElementById('noNotificationsText');
+
+            if (notifs.length > 0) {
+                badge.textContent = notifs.length;
+                badge.style.display = 'block';
+                noNotifText.style.display = 'none';
+                listHub.innerHTML = '';
+                
+                notifs.forEach(n => {
+                    let borderClass = 'border-indigo';
+                    if (n.type === 'danger') borderClass = 'border-danger';
+                    if (n.type === 'success') borderClass = 'border-success';
+                    if (n.type === 'warning') borderClass = 'border-warning';
+
+                    listHub.innerHTML += `
+                        <div class="p-2 mb-2 rounded border-start border-3 bg-dark-subtle ${borderClass}" style="font-size: 0.75rem; color: #cbd5e1;">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-semibold text-white">${n.type.toUpperCase()}</span>
+                                <span class="text-muted-dark fs-8">${n.date}</span>
+                            </div>
+                            <p class="mb-0 text-truncate-2">${n.message}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                badge.style.display = 'none';
+                noNotifText.style.display = 'block';
+                listHub.innerHTML = '';
+            }
+        }
+
+        document.getElementById('clearNotificationsBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            saveNotifications([]);
+            renderNotifications();
+            const bellIcon = document.querySelector('#notificationBellBtn i');
+            if (bellIcon) {
+                bellIcon.classList.remove('fa-solid', 'text-warning');
+                bellIcon.classList.add('fa-regular');
+            }
+        });
+
+        // ------------------ AJAX SPA ROUTER ------------------
+        function loadPageSPA(url, pushToHistory = true) {
+            const curtain = document.getElementById('pageLoaderCurtain');
+            curtain.classList.add('active'); // Perdeyi çek
+
+            fetch(url, { cache: 'no-store' })
+                .then(res => {
+                    if (!res.ok) throw new Error("Sayfa yüklenemedi.");
+                    return res.text();
+                })
+                .then(html => {
+                    const parser = new DOMParser();
+                    const newDoc = parser.parseFromString(html, 'text/html');
+                    
+                    // İçeriği güncelle
+                    const newContent = newDoc.getElementById('spaContentBody').innerHTML;
+                    const container = document.getElementById('spaContentBody');
+                    
+                    // Yumuşak geçiş için fade-out
+                    container.classList.add('fade-out');
+                    
+                    setTimeout(() => {
+                        container.innerHTML = newContent;
+                        container.classList.remove('fade-out');
+                        container.classList.add('fade-in');
+                        
+                        // Başlığı güncelle
+                        document.title = newDoc.title;
+                        
+                        // Header Başlığını Güncelle
+                        const newHeader = newDoc.getElementById('pageMainHeader')?.innerHTML;
+                        if (newHeader) {
+                            document.getElementById('pageMainHeader').innerHTML = newHeader;
+                        }
+
+                        // Menüdeki aktifliği güncelle
+                        updateActiveSidebarLink(url);
+
+                        // Script etiketlerini yeniden çalıştır (Örn: sayfa bazlı Chart.js kodları)
+                        const scripts = container.querySelectorAll('script');
+                        scripts.forEach(oldScript => {
+                            const newScript = document.createElement('script');
+                            newScript.text = oldScript.text;
+                            document.body.appendChild(newScript).parentNode.removeChild(newScript);
+                        });
+
+                        if (pushToHistory) {
+                            history.pushState(null, '', url);
+                        }
+                        
+                        // Kartları canlandır (Staggered Animation)
+                        if (typeof window.animateCards === "function") {
+                            window.animateCards();
+                        }
+                        
+                        // Perdeyi kaldır
+                        setTimeout(() => {
+                            curtain.classList.remove('active');
+                            container.classList.remove('fade-in');
+                        }, 250);
+                    }, 200);
+                })
+                .catch(err => {
+                    console.error(err);
+                    curtain.classList.remove('active');
+                    window.showToast("Sayfa yüklenirken bir hata oluştu.", "danger");
+                });
+        }
+
+        function updateActiveSidebarLink(url) {
+            const parsedUrl = new URL(url, window.location.origin);
+            const path = parsedUrl.pathname;
+            
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-item');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                const href = link.getAttribute('href');
+                if (href) {
+                    const linkPath = new URL(href, window.location.origin).pathname;
+                    if (path === linkPath) {
+                        link.classList.add('active');
+                    }
+                }
+            });
+        }
+
+        // Tıklamaları dinle (Sidebar linkleri için)
+        document.addEventListener("click", function(e) {
+            const link = e.target.closest('.sidebar-nav a:not([target="_blank"])');
+            if (link) {
+                e.preventDefault();
+                const url = link.getAttribute('href');
+                loadPageSPA(url);
+            }
+        });
+
+        // Tarayıcı geri-ileri butonları (Popstate)
+        window.addEventListener("popstate", function() {
+            loadPageSPA(window.location.pathname, false);
+        });
+
+        // ------------------ MODAL & FORM INITS ------------------
+        document.addEventListener("DOMContentLoaded", function() {
+            // Handle Splash Screen fade-out
+            const splash = document.getElementById('appSplash');
+            if (splash && splash.style.display !== 'none') {
+                setTimeout(() => {
+                    splash.style.transition = 'opacity 0.6s ease, visibility 0.6s ease';
+                    splash.style.opacity = '0';
+                    splash.style.visibility = 'hidden';
+                    sessionStorage.setItem('wealthflow_splash_shown', 'true');
+                    setTimeout(() => {
+                        splash.remove();
+                    }, 600);
+                }, 1800);
+            }
+
+            window.loadLayoutWallets = function() {
+                const walletSelect = document.getElementById('quickTxWalletSelect');
+                if (!walletSelect) return;
+                fetch('/api/wallets')
+                    .then(res => res.json())
+                    .then(data => {
+                        walletSelect.innerHTML = '<option value="">Seçiniz...</option>';
+                        data.forEach(w => {
+                            walletSelect.innerHTML += `<option value="${w.id}">${w.name} (${w.balance.toLocaleString('tr-TR')} ₺)</option>`;
+                        });
+                    });
+            };
+            window.loadLayoutWallets();
+
+            // Kategorileri modal dropdown'ına doldur
+            const categorySelect = document.getElementById('quickTxCategorySelect');
+            if (categorySelect) {
+                fetch('/api/categories')
+                    .then(res => res.json())
+                    .then(data => {
+                        categorySelect.innerHTML = '<option value="">Seçiniz...</option>';
+                        data.forEach(cat => {
+                            categorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                        });
+                    });
+            }
+
+            // Tema Değiştirici Butonları ve Durumu
+            const activeAccent = localStorage.getItem("wealthflow_accent") || "indigo";
+            
+            document.querySelectorAll('.theme-dot-btn').forEach(btn => {
+                const accent = btn.getAttribute('data-accent');
+                if (accent === activeAccent) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+                
+                btn.addEventListener('click', function() {
+                    const newAccent = this.getAttribute('data-accent');
+                    const themes = {
+                        indigo: { primary: "#6366f1", hover: "#4f46e5", soft: "rgba(99, 102, 241, 0.15)" },
+                        emerald: { primary: "#10b981", hover: "#059669", soft: "rgba(16, 185, 129, 0.15)" },
+                        cyan: { primary: "#06b6d4", hover: "#0891b2", soft: "rgba(6, 182, 212, 0.15)" },
+                        rose: { primary: "#f43f5e", hover: "#e11d48", soft: "rgba(244, 63, 94, 0.15)" }
+                    };
+                    const t = themes[newAccent] || themes.indigo;
+                    document.documentElement.style.setProperty('--color-indigo', t.primary);
+                    document.documentElement.style.setProperty('--color-indigo-hover', t.hover);
+                    document.documentElement.style.setProperty('--color-indigo-soft', t.soft);
+                    
+                    localStorage.setItem("wealthflow_accent", newAccent);
+                    
+                    document.querySelectorAll('.theme-dot-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Custom event yayınla
+                    const event = new CustomEvent("accentThemeChanged", { detail: { accent: newAccent, colors: t } });
+                    document.dispatchEvent(event);
+                    
+                    window.showToast(`Renk teması güncellendi!`, "success");
+                });
+            });
+
+            // Hızlı işlem ekleme Ajax POST
+            document.getElementById('quickTransactionForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const jsonData = {
+                    description: formData.get('Description'),
+                    amount: parseFloat(formData.get('Amount')),
+                    date: formData.get('Date'),
+                    type: parseInt(formData.get('Type')),
+                    walletId: parseInt(formData.get('WalletId')),
+                    categoryId: parseInt(formData.get('CategoryId'))
+                };
+
+                fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(jsonData)
+                })
+                .then(async res => {
+                    const data = await res.json();
+                    if (res.ok) {
+                        let modalEl = document.getElementById('quickTransactionModal');
+                        let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                        if (!modalInstance) {
+                            modalInstance = new bootstrap.Modal(modalEl);
+                        }
+                        modalInstance.hide();
+                        this.reset();
+                        
+                        window.addNotification(`"${jsonData.description}" işlemi cüzdandan düşülerek kaydedildi!`, 'success');
+                        
+                        if (typeof window.loadLayoutWallets === "function") {
+                            window.loadLayoutWallets();
+                        }
+
+                        // Sayfa yenilemeden dashboard/ledger verilerini güncelle
+                        const event = new CustomEvent("transactionAdded");
+                        document.dispatchEvent(event);
+                    } else {
+                        alert(data.errors ? data.errors.join('\n') : "İşlem hatası.");
+                    }
+                })
+                .catch(err => console.error(err));
+            });
+        });
+    </script>
+</body>
+</html>

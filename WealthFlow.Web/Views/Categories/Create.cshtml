@@ -1,0 +1,93 @@
+@model WealthFlow.Application.DTOs.CategoryDto
+@{
+    ViewData["Title"] = "Yeni Kategori";
+    ViewData["PageTitle"] = "Kategori Ekle";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card">
+            <h2 class="card-title-custom mb-4">Kategori Detayları</h2>
+            
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-4">
+                    <label asp-for="Name" class="form-label">Kategori Adı</label>
+                    <input asp-for="Name" class="form-control" placeholder="Örn: Alışveriş, Faturalar, Maaş..." required />
+                    <span asp-validation-for="Name" class="text-danger fs-8"></span>
+                </div>
+
+                <input type="hidden" asp-for="Icon" id="selectedIcon" value="fa-shopping-basket" />
+                <input type="hidden" asp-for="Color" id="selectedColor" value="#EF4444" />
+
+                <div class="mb-4">
+                    <label class="form-label d-block">İkon Seçin</label>
+                    <div class="icon-selector-grid d-flex flex-wrap gap-2 p-2 border border-secondary rounded bg-dark-subtle">
+                        @foreach (var icon in ViewBag.AvailableIcons)
+                        {
+                            <button type="button" class="btn btn-dark icon-select-btn @(icon == "fa-shopping-basket" ? "selected" : "")" data-icon="@icon">
+                                <i class="fa-solid @icon"></i>
+                            </button>
+                        }
+                    </div>
+                    <span asp-validation-for="Icon" class="text-danger fs-8"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label d-block">Renk Seçin</label>
+                    <div class="color-selector-grid d-flex flex-wrap gap-2 p-2 border border-secondary rounded bg-dark-subtle">
+                        @foreach (var color in ViewBag.AvailableColors)
+                        {
+                            <button type="button" class="color-select-btn @(color == "#EF4444" ? "selected" : "")" data-color="@color" style="background-color: @color;"></button>
+                        }
+                    </div>
+                    <span asp-validation-for="Color" class="text-danger fs-8"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+                    <button type="submit" class="btn btn-indigo px-4">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        (function() {
+            function initSelectors() {
+                const iconBtns = document.querySelectorAll(".icon-select-btn");
+                const hiddenIconInput = document.getElementById("selectedIcon");
+
+                iconBtns.forEach(btn => {
+                    btn.addEventListener("click", function() {
+                        iconBtns.forEach(b => b.classList.remove("selected"));
+                        this.classList.add("selected");
+                        hiddenIconInput.value = this.getAttribute("data-icon");
+                    });
+                });
+
+                const colorBtns = document.querySelectorAll(".color-select-btn");
+                const hiddenColorInput = document.getElementById("selectedColor");
+
+                colorBtns.forEach(btn => {
+                    btn.addEventListener("click", function() {
+                        colorBtns.forEach(b => b.classList.remove("selected"));
+                        this.classList.add("selected");
+                        hiddenColorInput.value = this.getAttribute("data-color");
+                    });
+                });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", initSelectors);
+            } else {
+                initSelectors();
+            }
+        })();
+    </script>
+}

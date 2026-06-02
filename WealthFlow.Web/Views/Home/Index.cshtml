@@ -1,0 +1,2353 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["PageTitle"] = "Finansal Özet";
+}
+
+<!-- Canlı Döviz Bandı -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="glass-card border-glow p-2 d-flex justify-content-between align-items-center flex-wrap gap-3" style="border-radius: 12px; background: rgba(13, 16, 30, 0.45); border: 1px solid rgba(255,255,255,0.03) !important;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-globe text-muted fs-7"></i>
+                <span class="text-muted fs-8 fw-semibold uppercase" style="letter-spacing: 0.5px; font-size: 0.65rem;">Piyasa Kurları:</span>
+            </div>
+            
+            <!-- USD Card -->
+            <div class="d-flex align-items-center gap-3 px-3 py-1 rounded" id="rate-usd" style="min-width: 220px; transition: background-color 0.5s ease; background: transparent; border: none !important;">
+                <div class="category-icon-wrapper bg-indigo-soft text-indigo" style="width: 28px; height: 28px; border-radius: 6px;">
+                    <i class="fa-solid fa-dollar-sign fs-7"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold text-white fs-8" style="font-size: 0.72rem;">USD/TRY</span>
+                        <span class="rate-badge text-success fs-9 fw-semibold" id="usd-change" style="font-size: 0.65rem;">+0.06%</span>
+                    </div>
+                    <span class="fw-bold fs-7 text-white" id="usd-value" style="font-size: 0.78rem;">45.9000 ₺</span>
+                </div>
+                <div class="sparkline-container ms-auto">
+                    <canvas id="usdSparkline"></canvas>
+                </div>
+            </div>
+
+            <!-- EUR Card -->
+            <div class="d-flex align-items-center gap-3 px-3 py-1 rounded" id="rate-eur" style="min-width: 220px; transition: background-color 0.5s ease; background: transparent; border: none !important;">
+                <div class="category-icon-wrapper bg-indigo-soft text-indigo" style="width: 28px; height: 28px; border-radius: 6px;">
+                    <i class="fa-solid fa-euro-sign fs-7"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold text-white fs-8" style="font-size: 0.72rem;">EUR/TRY</span>
+                        <span class="rate-badge text-danger fs-9 fw-semibold" id="eur-change" style="font-size: 0.65rem;">-0.01%</span>
+                    </div>
+                    <span class="fw-bold fs-7 text-white" id="eur-value" style="font-size: 0.78rem;">53.5000 ₺</span>
+                </div>
+                <div class="sparkline-container ms-auto">
+                    <canvas id="eurSparkline"></canvas>
+                </div>
+            </div>
+
+            <!-- Gold Card -->
+            <div class="d-flex align-items-center gap-3 px-3 py-1 rounded" id="rate-gold" style="min-width: 220px; transition: background-color 0.5s ease; background: transparent; border: none !important;">
+                <div class="category-icon-wrapper bg-warning-soft text-warning" style="width: 28px; height: 28px; border-radius: 6px;">
+                    <i class="fa-solid fa-coins fs-7"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold text-white fs-8" style="font-size: 0.72rem;">ALTIN (GAU)</span>
+                        <span class="rate-badge text-success fs-9 fw-semibold" id="gold-change" style="font-size: 0.65rem;">+0.36%</span>
+                    </div>
+                    <span class="fw-bold fs-7 text-white" id="gold-value" style="font-size: 0.78rem;">6.600,00 ₺</span>
+                </div>
+                <div class="sparkline-container ms-auto">
+                    <canvas id="goldSparkline"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards (Hydrated via API) -->
+<div class="row g-4 mb-4">
+    <!-- Net Worth Card -->
+    <div class="col-md-3">
+        <div class="stat-card glass-card skeleton-card glowing-card-indigo" id="netWorthCard">
+            <div class="stat-icon bg-indigo-soft">
+                <i class="fa-solid fa-scale-balanced text-indigo"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Net Varlık</h3>
+                <div class="skeleton-line w-75 mb-2"></div>
+                <p class="stat-value text-data" style="display:none;"></p>
+                <span class="stat-subtext text-muted">Toplam bakiye</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Income Card -->
+    <div class="col-md-3">
+        <div class="stat-card glass-card skeleton-card glowing-card-success" id="incomeCard">
+            <div class="stat-icon bg-success-soft">
+                <i class="fa-solid fa-arrow-trend-up text-success"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Bu Ayki Gelir</h3>
+                <div class="skeleton-line w-75 mb-2"></div>
+                <p class="stat-value text-success text-data" style="display:none;"></p>
+                <span class="stat-subtext text-muted">Bu ay kazanılan</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Expense Card -->
+    <div class="col-md-3">
+        <div class="stat-card glass-card skeleton-card glowing-card-danger" id="expenseCard">
+            <div class="stat-icon bg-danger-soft">
+                <i class="fa-solid fa-arrow-trend-down text-danger"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Bu Ayki Gider</h3>
+                <div class="skeleton-line w-75 mb-2"></div>
+                <p class="stat-value text-danger text-data" style="display:none;"></p>
+                <span class="stat-subtext text-muted">Bu ay harcanan</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Rate Card -->
+    <div class="col-md-3">
+        <div class="stat-card glass-card skeleton-card glowing-card-info" id="savingsCard">
+            <div class="stat-icon bg-info-soft">
+                <i class="fa-solid fa-piggy-bank text-info"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Tasarruf Oranı</h3>
+                <div class="skeleton-line w-50 mb-2"></div>
+                <p class="stat-value text-data" style="display:none;"></p>
+                <div class="progress custom-mini-progress mt-1" style="display:none;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Insights Section -->
+<div class="row g-4 mb-4">
+    <!-- Monthly Trend Chart (8 cols) -->
+    <div class="col-lg-8">
+        <div class="chart-card glass-card skeleton-card h-100" id="trendChartCard">
+            <div class="card-header-custom mb-3">
+                <h2 class="card-title-custom">Aylık Nakit Akışı</h2>
+                <p class="text-muted">Gelir ve gider karşılaştırması</p>
+            </div>
+            <div class="skeleton-block h-250 w-100 mb-2"></div>
+            <div class="chart-container" style="display:none;">
+                <canvas id="cashFlowChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Akıllı Finansal Öneriler & Sağlık Skoru (4 cols) -->
+    <div class="col-lg-4 d-flex flex-column gap-4">
+        <!-- Finansal Sağlık Skoru Card -->
+        <div class="glass-card border-glow text-center p-3 d-flex flex-column align-items-center justify-content-center" id="healthScoreCard" style="height: 190px;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="card-title-custom fw-bold" style="font-size: 0.8rem; margin: 0;">Finansal Sağlık Skoru</span>
+            </div>
+            
+            <div class="position-relative" style="width: 90px; height: 90px;">
+                <svg viewBox="0 0 36 36" class="circular-chart" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                    <path class="circle-bg"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        style="fill: none; stroke: rgba(255,255,255,0.03); stroke-width: 3;"
+                    />
+                    <path class="circle-fill"
+                        id="healthScoreCircle"
+                        stroke-dasharray="0, 100"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        style="fill: none; stroke: var(--color-indigo); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 1s ease-out, stroke 0.5s ease;"
+                    />
+                </svg>
+                <div class="position-absolute top-50 start-50 translate-middle d-flex flex-column align-items-center">
+                    <span class="fw-extrabold fs-5 text-white" id="healthScoreText" style="line-height: 1; font-weight: 800; font-family: var(--font-heading);">0</span>
+                    <span class="text-muted-dark" style="font-size: 0.55rem; font-weight: 600;">Puan</span>
+                </div>
+            </div>
+            <p class="mb-0 text-muted fs-9 mt-2 fw-medium" id="healthScoreStatus">Hesaplanıyor...</p>
+        </div>
+
+        <!-- Akıllı Öneriler Card -->
+        <div class="glass-card skeleton-card flex-grow-1 border-glow" id="insightsCard" style="min-height: 220px;">
+            <div class="card-header-custom mb-3">
+                <h2 class="card-title-custom"><i class="fa-solid fa-lightbulb text-indigo me-2"></i>Finansal Analiz & Öneriler</h2>
+                <p class="text-muted">Harcama verilerinize göre analizler</p>
+            </div>
+            <div class="skeleton-list">
+                <div class="skeleton-line mb-3 h-20 w-100"></div>
+                <div class="skeleton-line mb-3 h-20 w-100"></div>
+            </div>
+            <div class="insights-list text-data-list d-flex flex-column gap-2" style="display:none;">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mid Section: Wallets Grid (12 cols for beautiful credit cards) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="glass-card skeleton-card" id="walletsCard">
+            <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="card-title-custom">Hesaplar & Cüzdanlar</h2>
+                    <p class="text-muted">Aktif varlık hesaplarınız ve sanal kartlarınız</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#transferModal">Bakiye Transferi</button>
+                    <button class="btn btn-indigo btn-sm" onclick="openWalletManagerModal()">Cüzdan Yönetimi</button>
+                </div>
+            </div>
+            
+            <div class="row g-3 skeleton-list" style="min-height: 185px;">
+                <div class="col-md-4"><div class="skeleton-block w-100" style="height: 185px;"></div></div>
+                <div class="col-md-4"><div class="skeleton-block w-100" style="height: 185px;"></div></div>
+                <div class="col-md-4"><div class="skeleton-block w-100" style="height: 185px;"></div></div>
+            </div>
+
+            <div class="row g-3 text-data-list" id="walletsGrid" style="display:none;">
+                <!-- Wallet cards loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section: Category Distribution & Asset Allocation side-by-side (6 cols each) -->
+<div class="row g-4 mb-4">
+    <!-- Kategori Dağılımı (6 cols) -->
+    <div class="col-lg-6">
+        <div class="chart-card glass-card skeleton-card h-100" id="categoryChartCard">
+            <div class="card-header-custom mb-3">
+                <h2 class="card-title-custom">Kategori Dağılımı</h2>
+                <p class="text-muted">Bu ayki harcamaların dağılımı</p>
+            </div>
+            <div class="skeleton-block rounded-circle" style="width:120px; height:120px; margin: auto;"></div>
+            <div class="chart-container d-flex flex-column align-items-center justify-content-center" style="display:none;">
+                <div style="width: 140px; height: 140px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="category-legend mt-2 w-100" id="catLegend"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Varlık Dağılımı (6 cols) -->
+    <div class="col-lg-6">
+        <div class="chart-card glass-card skeleton-card h-100" id="assetAllocationChartCard">
+            <div class="card-header-custom mb-3">
+                <h2 class="card-title-custom">Varlık Dağılımı</h2>
+                <p class="text-muted">Toplam birikim ve varlıklarınızın cüzdan dağılımı</p>
+            </div>
+            <div class="skeleton-block rounded-circle" style="width:120px; height:120px; margin: auto;"></div>
+            <div class="chart-container d-flex flex-column align-items-center justify-content-center" style="display:none;">
+                <div style="width: 140px; height: 140px;">
+                    <canvas id="assetAllocationChart"></canvas>
+                </div>
+                <div class="category-legend mt-2 w-100" id="assetLegend"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Akıllı Simülatör Bölümü -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="glass-card border-glow">
+            <div class="row g-4 align-items-center">
+                <!-- Input Sliders (5 cols) -->
+                <div class="col-lg-5">
+                    <div class="card-header-custom mb-3">
+                        <h2 class="card-title-custom"><i class="fa-solid fa-calculator text-indigo me-2"></i>Akıllı Varlık Simülatörü</h2>
+                        <p class="text-muted">Aylık birikim ve bileşik büyüme oranlarınızı simüle ederek geleceğinizi planlayın.</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label mb-0 fs-8 text-muted">Aylık Birikim Tutarı</label>
+                            <span class="fw-bold text-white fs-7" id="sliderValSavings">3,000 ₺</span>
+                        </div>
+                        <input type="range" class="custom-range-slider" id="sliderSavings" min="500" max="50000" step="500" value="3000">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label mb-0 fs-8 text-muted">Beklenen Yıllık Büyüme / Faiz Oranı (%)</label>
+                            <span class="fw-bold text-white fs-7" id="sliderValGrowth">%35</span>
+                        </div>
+                        <input type="range" class="custom-range-slider" id="sliderGrowth" min="5" max="80" step="1" value="35">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label mb-0 fs-8 text-muted">Süre (Yıl)</label>
+                            <span class="fw-bold text-white fs-7" id="sliderValYears">10 Yıl</span>
+                        </div>
+                        <input type="range" class="custom-range-slider" id="sliderYears" min="1" max="20" step="1" value="10">
+                    </div>
+                    
+                    <!-- Simulation Stats -->
+                    <div class="row g-2 mt-2">
+                        <div class="col-6">
+                            <div class="p-2 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important;">
+                                <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">TOPLAM ANAPARA</span>
+                                <span class="fw-bold text-white fs-7" id="simValPrincipal">360.000 ₺</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important;">
+                                <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">TAHMİNİ TOPLAM DEĞER</span>
+                                <span class="fw-bold text-indigo fs-7" id="simValTotal" style="color: var(--color-indigo) !important;">1.245.670 ₺</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart Visualization (7 cols) -->
+                <div class="col-lg-7">
+                    <div class="chart-container" style="height: 250px; position: relative;">
+                        <canvas id="simChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gelişmiş Finansal Analiz & Araçlar (Tabbed Panel) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="glass-card border-glow">
+            <div class="card-header-custom mb-4">
+                <h2 class="card-title-custom"><i class="fa-solid fa-gears text-indigo me-2"></i>Gelişmiş Finansal Mühendislik Araçları</h2>
+                <p class="text-muted">Portföyünüzü en üst düzeye ulaştırmak için entegre analitik modüller ve simülatörler.</p>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs custom-tabs-nav border-bottom border-dark-subtle mb-4" id="advancedFinanceTabs" role="tablist" style="border-color: rgba(255,255,255,0.05) !important;">
+                <li class="nav-item-tab" role="presentation">
+                    <button class="nav-link-tab active" id="tab-bes-btn" data-bs-toggle="tab" data-bs-target="#panel-bes" type="button" role="tab" aria-controls="panel-bes" aria-selected="true">
+                        <i class="fa-solid fa-shield-halved me-2 text-indigo"></i>BES & Devlet Katkısı
+                    </button>
+                </li>
+                <li class="nav-item-tab" role="presentation">
+                    <button class="nav-link-tab" id="tab-tax-btn" data-bs-toggle="tab" data-bs-target="#panel-tax" type="button" role="tab" aria-controls="panel-tax" aria-selected="false">
+                        <i class="fa-solid fa-scale-balanced me-2 text-indigo"></i>Vergi Planlayıcı
+                    </button>
+                </li>
+                <li class="nav-item-tab" role="presentation">
+                    <button class="nav-link-tab" id="tab-debt-btn" data-bs-toggle="tab" data-bs-target="#panel-debt" type="button" role="tab" aria-controls="panel-debt" aria-selected="false">
+                        <i class="fa-solid fa-credit-card me-2 text-indigo"></i>Borç Stratejisti
+                    </button>
+                </li>
+                <li class="nav-item-tab" role="presentation">
+                    <button class="nav-link-tab" id="tab-fire-btn" data-bs-toggle="tab" data-bs-target="#panel-fire" type="button" role="tab" aria-controls="panel-fire" aria-selected="false">
+                        <i class="fa-solid fa-rocket me-2 text-indigo"></i>FIRE Özgürlük Hesabı
+                    </button>
+                </li>
+                <li class="nav-item-tab" role="presentation">
+                    <button class="nav-link-tab" id="tab-exposure-btn" data-bs-toggle="tab" data-bs-target="#panel-exposure" type="button" role="tab" aria-controls="panel-exposure" aria-selected="false">
+                        <i class="fa-solid fa-chart-line me-2 text-indigo"></i>Kur & Enflasyon Koruması
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content Panels -->
+            <div class="tab-content" id="advancedFinanceTabContent">
+                <!-- 1. BES & Government matching -->
+                <div class="tab-pane fade show active" id="panel-bes" role="tabpanel" aria-labelledby="tab-bes-btn">
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <h4 class="text-white fs-7 fw-bold mb-3">BES Tasarruf & Katkı Projeksiyonu</h4>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0 fs-8 text-muted">Aylık Ödeme Tutarı</label>
+                                    <span class="fw-bold text-white fs-7" id="besSliderValVal">2.000 ₺</span>
+                                </div>
+                                <input type="range" class="custom-range-slider" id="besSliderPayment" min="500" max="25000" step="500" value="2000">
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0 fs-8 text-muted">Süre (Yıl)</label>
+                                    <span class="fw-bold text-white fs-7" id="besSliderValYears">10 Yıl</span>
+                                </div>
+                                <input type="range" class="custom-range-slider" id="besSliderYears" min="5" max="30" step="1" value="10">
+                            </div>
+                            
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
+                                    <div class="p-2 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important;">
+                                        <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">TOPLAM ÖDEMENİZ</span>
+                                        <span class="fw-bold text-white fs-7" id="besTotalPrincipal">240.000 ₺</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important;">
+                                        <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">%30 DEVLET KATKISI</span>
+                                        <span class="fw-bold text-success fs-7" id="besTotalGov">72.000 ₺</span>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <div class="p-2 rounded bg-dark-subtle border border-dark-subtle text-center" style="border-color: rgba(255,255,255,0.02) !important;">
+                                        <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">FON GETİRİSİ DAHİL TAHMİNİ BİRİKİM (%35 BÜYÜME)</span>
+                                        <span class="fw-bold text-indigo fs-6" id="besEstimatedWealth" style="color: var(--color-indigo) !important;">685.420 ₺</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="chart-container" style="height: 250px; position: relative;">
+                                <canvas id="besChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Tax bracket Planner -->
+                <div class="tab-pane fade" id="panel-tax" role="tabpanel" aria-labelledby="tab-tax-btn">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h4 class="text-white fs-7 fw-bold mb-3"><i class="fa-solid fa-circle-info text-indigo me-2"></i>Vergi Durum Raporu</h4>
+                            <div class="p-3 rounded bg-dark-subtle border border-dark-subtle d-flex flex-column gap-3 mb-2" style="border-color: rgba(255,255,255,0.02) !important;">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted fs-8">Tahmini Brüt Gelir (Yıllık):</span>
+                                    <span class="fw-bold text-white fs-8" id="taxAnnualIncome">0 ₺</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted fs-8">Güncel Gelir Vergisi Diliminiz:</span>
+                                    <span class="badge bg-danger-soft text-danger fw-bold fs-8" id="taxBracketPercent">%0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted fs-8">Tahmini Yıllık Gelir Vergisi Yükü:</span>
+                                    <span class="fw-bold text-white fs-8" id="taxDueVal">0 ₺</span>
+                                </div>
+                            </div>
+                            <div class="p-2 border-start border-3 border-info bg-info-soft rounded mt-2" style="font-size: 0.72rem;">
+                                <i class="fa-solid fa-lightbulb text-info me-2"></i>
+                                <span class="text-white">BES katkıları ve yasal sağlık sigorta primleri gelir vergisi matrahınızdan düşülerek verginizi hafifletebilir.</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="text-white fs-7 fw-bold mb-3">Türkiye Gelir Vergisi Dilimleri (Simüle)</h4>
+                            <div class="table-responsive">
+                                <table class="table custom-table mb-0 fs-8">
+                                    <thead>
+                                        <tr>
+                                            <th>Dilim Oranı</th>
+                                            <th>Matrah Aralığı</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="taxTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Debt Paydown strategist -->
+                <div class="tab-pane fade" id="panel-debt" role="tabpanel" aria-labelledby="tab-debt-btn">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <h4 class="text-white fs-7 fw-bold mb-3">Aktif Borç Bakiyeleri</h4>
+                            <div class="d-flex flex-column gap-2" id="debtListContainer">
+                                <!-- Loaded dynamically -->
+                            </div>
+                            <div class="p-3 rounded bg-dark-subtle border border-dark-subtle text-center mt-3" style="border-color: rgba(255,255,255,0.02) !important;">
+                                <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">TOPLAM BORÇ</span>
+                                <span class="fw-bold text-danger fs-6" id="debtTotalAmount">0.00 ₺</span>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="text-white fs-7 fw-bold mb-0">Borç Kapatma Stratejisi</h4>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-light active" id="btnDebtSnowball">Snowball</button>
+                                    <button type="button" class="btn btn-outline-light" id="btnDebtAvalanche">Avalanche</button>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important; min-height: 180px;">
+                                <div id="debtStrategyExplain" class="fs-8 text-muted mb-3"></div>
+                                <div class="timeline-steps" id="debtPaydownStepsContainer" style="font-size: 0.72rem;">
+                                    <!-- Dynamic step listing -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. FIRE Progress Calculator -->
+                <div class="tab-pane fade" id="panel-fire" role="tabpanel" aria-labelledby="tab-fire-btn">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h4 class="text-white fs-7 fw-bold mb-3">Finansal Bağımsızlık İlerlemesi</h4>
+                            <div class="d-flex flex-column align-items-center justify-content-center p-3 rounded bg-dark-subtle border border-dark-subtle text-center" style="border-color: rgba(255,255,255,0.02) !important; height: 200px;">
+                                <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">MEVCUT HEDEF ORANI</span>
+                                <span class="fw-extrabold text-indigo fs-2 my-2" id="fireProgressPercent" style="color: var(--color-indigo) !important; font-weight: 800;">%0</span>
+                                <div class="progress w-100 custom-progress" style="height: 10px !important;">
+                                    <div class="progress-bar bg-indigo" id="fireProgressBar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <span class="text-muted mt-2 fs-9" id="fireProgressSub">0 ₺ birikti / FIRE Sayısı: 0 ₺</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="text-white fs-7 fw-bold mb-3">FIRE Analitik Raporu</h4>
+                            <div class="p-3 rounded bg-dark-subtle border border-dark-subtle d-flex flex-column gap-2 fs-8" style="border-color: rgba(255,255,255,0.02) !important;">
+                                <div class="d-flex justify-content-between pb-1 border-bottom border-dark-subtle" style="border-color: rgba(255,255,255,0.04) !important;">
+                                    <span class="text-muted">Aylık Gider Ortalama:</span>
+                                    <span class="fw-semibold text-white" id="fireMonthlyExpense">0 ₺</span>
+                                </div>
+                                <div class="d-flex justify-content-between pb-1 border-bottom border-dark-subtle" style="border-color: rgba(255,255,255,0.04) !important;">
+                                    <span class="text-muted">Yıllık Gider Yükü:</span>
+                                    <span class="fw-semibold text-white" id="fireAnnualExpense">0 ₺</span>
+                                </div>
+                                <div class="d-flex justify-content-between pb-1 border-bottom border-dark-subtle" style="border-color: rgba(255,255,255,0.04) !important;">
+                                    <span class="text-muted">Gereken Portföy (FIRE Sayısı):</span>
+                                    <span class="fw-semibold text-white text-indigo" id="fireNumberVal">0 ₺</span>
+                                </div>
+                                <div class="d-flex justify-content-between pt-1">
+                                    <span class="text-muted">Tahmini Emeklilik Süresi:</span>
+                                    <span class="badge bg-success-soft text-success fw-bold" id="fireYearsVal">0 Yıl</span>
+                                </div>
+                            </div>
+                            <div class="p-2 border-start border-3 border-success bg-success-soft rounded mt-2" style="font-size: 0.72rem;">
+                                <i class="fa-solid fa-circle-check text-success me-2"></i>
+                                <span class="text-white">Yıllık %35 bileşik getiri ve ortalama birikim hızınızla FIRE hedefinize akıllı fon yatırımlarıyla çok daha erken ulaşabilirsiniz.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. FX exposure & inflation Hedging -->
+                <div class="tab-pane fade" id="panel-exposure" role="tabpanel" aria-labelledby="tab-exposure-btn">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <h4 class="text-white fs-7 fw-bold mb-3">Enflasyon Karşısı Hedge Gücü</h4>
+                            <div class="chart-container d-flex flex-column align-items-center justify-content-center" style="height: 220px;">
+                                <div style="width: 140px; height: 140px; position: relative;">
+                                    <canvas id="exposureChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <h4 class="text-white fs-7 fw-bold mb-3">Döviz & Kur Pozisyonu Raporu</h4>
+                            <div class="p-3 rounded bg-dark-subtle border border-dark-subtle mb-3" style="border-color: rgba(255,255,255,0.02) !important;">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-indigo-soft text-indigo fw-bold" id="exposureHedgeRatePercent">Hedge Oranı: %0</span>
+                                    <span class="text-muted fs-8">Korumalı Varlık Oranı</span>
+                                </div>
+                                <p class="text-muted fs-8 mb-0" id="exposureRecommendationText"></p>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <div class="p-2 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important;">
+                                        <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">TL VARLIKLAR</span>
+                                        <span class="fw-bold text-white fs-8" id="exposureTRYVal">0 ₺</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important;">
+                                        <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">DÖVİZ (USD/EUR)</span>
+                                        <span class="fw-bold text-white fs-8" id="exposureUSDVal">0 ₺</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 rounded bg-dark-subtle border border-dark-subtle" style="border-color: rgba(255,255,255,0.02) !important;">
+                                        <span class="text-muted d-block fs-9" style="font-size: 0.65rem;">ALTIN (GAU)</span>
+                                        <span class="fw-bold text-warning fs-8" id="exposureGoldVal">0 ₺</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Abonelikler ve Sabit Ödemeler (Simülatörlü) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="glass-card skeleton-card" id="subscriptionsCard">
+            <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="card-title-custom"><i class="fa-solid fa-credit-card text-indigo me-2"></i>Abonelikler & Sabit Giderler Yönetimi</h2>
+                    <p class="text-muted">Aylık fatura ve üyelik yükleriniz. İptal simülasyonunu etkinleştirerek birikim hedeflerinize (ETA) etkisini canlı görün!</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-8 text-muted uppercase fw-semibold">Simülasyon Tasarrufu:</span>
+                    <span class="badge bg-success-soft fs-7 fw-bold text-success" id="simSavingsTotal">0.00 ₺</span>
+                </div>
+            </div>
+            
+            <div class="row g-3 skeleton-list" style="min-height: 100px;">
+                <div class="col-md-3"><div class="skeleton-block w-100" style="height: 100px;"></div></div>
+                <div class="col-md-3"><div class="skeleton-block w-100" style="height: 100px;"></div></div>
+                <div class="col-md-3"><div class="skeleton-block w-100" style="height: 100px;"></div></div>
+                <div class="col-md-3"><div class="skeleton-block w-100" style="height: 100px;"></div></div>
+            </div>
+
+            <div class="row g-3 text-data-list" id="subscriptionsGrid" style="display:none;">
+                <!-- Abonelik kartları dinamik yüklenecek -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Section: Transactions, Budgets & Goals -->
+<div class="row g-4">
+    <!-- Son İşlemler (5 cols) -->
+    <div class="col-lg-5">
+        <div class="glass-card skeleton-card h-100" id="transactionsListCard">
+            <div class="card-header-custom mb-3">
+                <h2 class="card-title-custom">Son İşlemler</h2>
+                <p class="text-muted">En son eklenen hareketler</p>
+            </div>
+            <div class="skeleton-list"><div class="skeleton-line mb-3 w-100"></div></div>
+            <div class="transaction-list text-data-list" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Bütçe Durumu (3 cols) -->
+    <div class="col-lg-3">
+        <div class="glass-card skeleton-card h-100" id="budgetsListCard">
+            <div class="card-header-custom mb-3">
+                <h2 class="card-title-custom">Bütçeler</h2>
+                <p class="text-muted">Gider limitleriniz</p>
+            </div>
+            <div class="skeleton-list"><div class="skeleton-line mb-3 w-100"></div></div>
+            <div class="budget-progress-list text-data-list" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Birikim Hedefleri (4 cols) -->
+    <div class="col-lg-4">
+        <div class="glass-card skeleton-card h-100" id="goalsListCard">
+            <div class="card-header-custom mb-3">
+                <h2 class="card-title-custom">Birikim Hedefleri</h2>
+                <p class="text-muted">Geleceğe yönelik birikim planlarınız</p>
+            </div>
+            <div class="skeleton-list"><div class="skeleton-line mb-3 w-100"></div></div>
+            <div class="goals-list text-data-list" style="display:none;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Wallet Transfer Modal -->
+<div class="modal fade custom-modal" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferModalLabel">Cüzdanlar Arası Transfer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="transferForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kaynak Cüzdan</label>
+                            <select name="FromWalletId" id="fromWalletSelect" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hedef Cüzdan</label>
+                            <select name="ToWalletId" id="toWalletSelect" class="form-select" required></select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Transfer Tutarı (₺)</label>
+                        <input name="Amount" type="number" step="0.01" class="form-control" required min="0.01" placeholder="0.00" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="submit" class="btn btn-indigo">Transfer Et</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Wallet Manager Modal -->
+<div class="modal fade custom-modal" id="walletManagerModal" tabindex="-1" aria-labelledby="walletManagerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="walletManagerModalLabel">Cüzdan & Hesap Yönetimi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <!-- Sol Bölüm: Cüzdan Listesi -->
+                    <div class="col-md-7 border-end border-dark-subtle" style="border-color: rgba(255,255,255,0.05) !important;">
+                        <h6 class="text-white mb-3">Mevcut Cüzdanlar</h6>
+                        <div id="managerWalletList" class="d-flex flex-column gap-2" style="max-height: 320px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Dynamically loaded wallets with edit/delete -->
+                        </div>
+                    </div>
+                    <!-- Sağ Bölüm: Ekle / Düzenle Formu -->
+                    <div class="col-md-5">
+                        <h6 class="text-white mb-3" id="walletFormTitle">Yeni Cüzdan Ekle</h6>
+                        <form id="walletForm">
+                            <input type="hidden" name="Id" id="walletFormId" />
+                            <div class="mb-2">
+                                <label class="form-label fs-8 text-muted">Cüzdan Adı</label>
+                                <input name="Name" id="walletFormName" class="form-control form-control-sm" required placeholder="örn: Nakit Cüzdan, Maaş Kartı" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label fs-8 text-muted">Bakiye (₺)</label>
+                                <input name="Balance" id="walletFormBalance" type="number" step="0.01" class="form-control form-control-sm" required placeholder="0.00" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label fs-8 text-muted">Renk</label>
+                                <select name="Color" id="walletFormColor" class="form-select form-select-sm">
+                                    <option value="#6366f1" style="color: #6366f1;">İndigo (Varsayılan)</option>
+                                    <option value="#3B82F6" style="color: #3B82F6;">Mavi</option>
+                                    <option value="#10B981" style="color: #10B981;">Yeşil</option>
+                                    <option value="#EF4444" style="color: #EF4444;">Kırmızı</option>
+                                    <option value="#F59E0B" style="color: #F59E0B;">Turuncu</option>
+                                    <option value="#EC4899" style="color: #EC4899;">Pembe</option>
+                                    <option value="#8B5CF6" style="color: #8B5CF6;">Mor</option>
+                                    <option value="#14B8A6" style="color: #14B8A6;">Turkuaz</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fs-8 text-muted">Simge (Icon)</label>
+                                <select name="Icon" id="walletFormIcon" class="form-select form-select-sm">
+                                    <option value="fa-wallet">Cüzdan (Varsayılan)</option>
+                                    <option value="fa-university">Banka / Kurum</option>
+                                    <option value="fa-credit-card">Kredi Kartı</option>
+                                    <option value="fa-coins">Para / Altın</option>
+                                    <option value="fa-piggy-bank">Tasarruf</option>
+                                    <option value="fa-briefcase">İş / Portföy</option>
+                                    <option value="fa-shield-halved">BES / Güvence</option>
+                                </select>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-indigo btn-sm flex-grow-1" id="walletFormSubmitBtn">Ekle</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="walletFormCancelBtn" style="display: none;" onclick="cancelWalletEdit()">Vazgeç</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WealthFlow Finansal Danışman Floating Panel -->
+<button class="wealthy-chat-toggle" id="wealthyChatToggleBtn" title="Finansal Danışman & Asistan">
+    <i class="fa-solid fa-comment-dots"></i>
+    <span>Finansal Danışman</span>
+</button>
+
+<div class="wealthy-chat-window" id="wealthyChatWindow">
+    <div class="wealthy-chat-header">
+        <div class="wealthy-chat-title-container">
+            <div class="wealthy-chat-avatar">W</div>
+            <div class="wealthy-chat-status">
+                <span>WealthFlow Danışmanı</span>
+                <small>Aktif</small>
+            </div>
+        </div>
+        <button class="wealthy-chat-close" id="wealthyChatCloseBtn">&times;</button>
+    </div>
+    
+    <div class="wealthy-chat-messages" id="wealthyChatMessages">
+        <div class="chat-bubble bot">
+            <h3>Merhaba! Ben WealthFlow Finansal Danışmanı 💼</h3>
+            <p>Finansal verilerinizi analiz etmek, bütçe aşımlarınızı süzmek veya birikim hedeflerinizin (ETA) zaman çizelgesini hesaplamak için buradayım.</p>
+            <p>Bana dilediğiniz soruyu yazabilir ya da aşağıdaki hazır sorulardan birini tıklayabilirsiniz:</p>
+            <div class="d-flex flex-wrap gap-1 mt-2">
+                <button class="btn btn-outline-light btn-sm chat-quick-query" style="font-size: 0.65rem;" data-query="Birikim hedeflerime ne zaman ulaşırım?">🎯 Hedefler ne durumda?</button>
+                <button class="btn btn-outline-light btn-sm chat-quick-query" style="font-size: 0.65rem;" data-query="Bütçe limitlerimi aştım mı?">📊 Bütçe durumum?</button>
+                <button class="btn btn-outline-light btn-sm chat-quick-query" style="font-size: 0.65rem;" data-query="Harcamalarımı nasıl kısabilirim?">💡 Tasarruf tavsiyesi?</button>
+            </div>
+        </div>
+    </div>
+    
+    <form class="wealthy-chat-input-area" id="wealthyChatForm">
+        <input type="text" class="form-control wealthy-chat-input" id="wealthyChatInput" placeholder="Finansal bir soru sorun..." required autocomplete="off" />
+        <button type="submit" class="btn-chat-send">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </form>
+</div>
+
+<script>
+    // MVC SPA Script tetikleme uyumluluğu için
+    (function() {
+        let trendChart = null;
+        let categoryChart = null;
+        let assetAllocationChart = null;
+        let simChart = null;
+        let usdSparklineChart = null;
+        let eurSparklineChart = null;
+        let goldSparklineChart = null;
+
+        let usdHistory = [45.72, 45.78, 45.82, 45.85, 45.88, 45.90];
+        let eurHistory = [53.25, 53.32, 53.40, 53.45, 53.48, 53.50];
+        let goldHistory = [6510.0, 6535.0, 6560.0, 6580.0, 6590.0, 6600.0];
+
+        let usdVal = 45.9000;
+        let eurVal = 53.5000;
+        let goldVal = 6600.00;
+
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const year = today.getFullYear();
+
+        // Sayfa yüklendiğinde veya event tetiklendiğinde dashboard'ı doldur
+        function refreshDashboard() {
+            // 1. Ana Dashboard API'si
+            fetch(`/api/dashboard?month=${month}&year=${year}`)
+                .then(res => res.json())
+                .then(data => {
+                    hydrateSummaryCards(data);
+                    drawTrendChart(data);
+                    drawCategoryChart(data);
+                    drawAssetAllocationChart(data);
+                    hydrateRecentTransactions(data);
+                    hydrateBudgets(data);
+                });
+
+            // 2. Cüzdanlar
+            fetch('/api/wallets')
+                .then(res => res.json())
+                .then(wallets => {
+                    hydrateWallets(wallets);
+                    populateTransferModalSelects(wallets);
+                });
+
+            // 3. Akıllı Finansal Öneriler
+            fetch(`/api/insights?month=${month}&year=${year}`)
+                .then(res => res.json())
+                .then(insights => {
+                    hydrateInsights(insights);
+                });
+
+            // 4. Hedefler
+            fetch('/api/goals')
+                .then(res => res.json())
+                .then(goals => {
+                    hydrateGoalsList(goals);
+                    runSimulationEta([]); // Load original ETAs on load
+                });
+
+            // 5. Finansal Sağlık Skoru
+            fetch('/api/insights/health-score')
+                .then(res => res.json())
+                .then(data => {
+                    hydrateHealthScore(data.score);
+                });
+
+            // 6. Abonelikler
+            fetch('/api/subscriptions')
+                .then(res => res.json())
+                .then(subs => {
+                    hydrateSubscriptions(subs);
+                });
+
+            // 7. Gelişmiş Finansal Modüller
+            if (typeof refreshAdvancedFinances === "function") {
+                refreshAdvancedFinances();
+            }
+        }
+
+        // Clean up previous event listener if it exists
+        if (window.onTransactionAddedHandler) {
+            document.removeEventListener("transactionAdded", window.onTransactionAddedHandler);
+        }
+        
+        window.onTransactionAddedHandler = function() {
+            if (typeof window.refreshDashboardFromHome === "function") {
+                window.refreshDashboardFromHome();
+            }
+        };
+        
+        document.addEventListener("transactionAdded", window.onTransactionAddedHandler);
+        window.refreshDashboardFromHome = refreshDashboard;
+
+        refreshDashboard();
+
+        // ------------------ HYDRATE FUNCTIONS ------------------
+        let healthScoreInterval = null;
+        function hydrateHealthScore(score) {
+            const circle = document.getElementById('healthScoreCircle');
+            const text = document.getElementById('healthScoreText');
+            const status = document.getElementById('healthScoreStatus');
+            
+            if (!circle || !text || !status) return;
+            
+            if (healthScoreInterval) clearInterval(healthScoreInterval);
+            
+            let currentScore = 0;
+            healthScoreInterval = setInterval(() => {
+                if (currentScore >= score) {
+                    clearInterval(healthScoreInterval);
+                    text.textContent = score;
+                } else {
+                    currentScore += Math.ceil((score - currentScore) / 5) || 1;
+                    if (currentScore > score) currentScore = score;
+                    text.textContent = currentScore;
+                }
+            }, 30);
+            
+            circle.setAttribute('stroke-dasharray', `${score}, 100`);
+            
+            let color = '#6366f1';
+            let textStatus = 'Finansal Durumunuz Stabil.';
+            
+            const activeAccent = localStorage.getItem("wealthflow_accent") || "indigo";
+            const themes = {
+                indigo: "#6366f1",
+                emerald: "#10b981",
+                cyan: "#06b6d4",
+                rose: "#f43f5e"
+            };
+            const themeColor = themes[activeAccent] || themes.indigo;
+            
+            if (score >= 80) {
+                color = '#10B981';
+                textStatus = 'Mükemmel Finansal Sağlık! 🚀';
+            } else if (score >= 60) {
+                color = themeColor;
+                textStatus = 'İyi Durumda, Dengeli. 👍';
+            } else if (score >= 40) {
+                color = '#F59E0B';
+                textStatus = 'Dikkat! Limiti Sıkılaştırın. ⚠️';
+            } else {
+                color = '#EF4444';
+                textStatus = 'Kritik Durum! Acil Önlem! 🚨';
+            }
+            
+            circle.style.stroke = color;
+            status.textContent = textStatus;
+        }
+
+        function hydrateSummaryCards(data) {
+            const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+            
+            document.querySelector('#netWorthCard .stat-value').textContent = formatter.format(data.netWorth);
+            document.querySelector('#incomeCard .stat-value').textContent = '+' + formatter.format(data.totalIncomeThisMonth);
+            document.querySelector('#expenseCard .stat-value').textContent = '-' + formatter.format(data.totalExpenseThisMonth);
+            document.querySelector('#savingsCard .stat-value').textContent = data.savingsRate.toFixed(1) + '%';
+            document.querySelector('#savingsCard .progress-bar').style.width = data.savingsRate + '%';
+
+            ['netWorthCard', 'incomeCard', 'expenseCard', 'savingsCard'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('skeleton-card');
+                    el.querySelector('.skeleton-line').style.display = 'none';
+                    el.querySelector('.text-data').style.display = 'block';
+                    const prog = el.querySelector('.custom-mini-progress');
+                    if (prog) prog.style.display = 'flex';
+                }
+            });
+        }
+
+        function drawTrendChart(data) {
+            const el = document.getElementById('trendChartCard');
+            el.classList.remove('skeleton-card');
+            el.querySelector('.skeleton-block').style.display = 'none';
+            el.querySelector('.chart-container').style.display = 'block';
+
+            if (trendChart) trendChart.destroy();
+            const ctx = document.getElementById('cashFlowChart').getContext('2d');
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.monthlyLabels,
+                    datasets: [
+                        {
+                            label: 'Gelir',
+                            data: data.monthlyIncomes,
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.06)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Gider',
+                            data: data.monthlyExpenses,
+                            borderColor: '#EF4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.06)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94A3B8', font: { family: 'Inter', size: 11 } } } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.03)' }, ticks: { color: '#94A3B8', font: { family: 'Inter', size: 10 } } },
+                        x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { family: 'Inter', size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function drawCategoryChart(data) {
+            const el = document.getElementById('categoryChartCard');
+            el.classList.remove('skeleton-card');
+            el.querySelector('.skeleton-block').style.display = 'none';
+            const container = el.querySelector('.chart-container');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+
+            if (categoryChart) categoryChart.destroy();
+
+            if (data.expensesByCategory.length > 0) {
+                container.innerHTML = `
+                    <div style="width: 140px; height: 140px;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="category-legend mt-2 w-100" id="catLegend"></div>
+                `;
+                const legend = document.getElementById('catLegend');
+                legend.innerHTML = '';
+
+                const labels = data.expensesByCategory.map(x => x.categoryName);
+                const amounts = data.expensesByCategory.map(x => x.totalAmount);
+                const colors = data.expensesByCategory.map(x => x.categoryColor);
+
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                categoryChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: amounts, backgroundColor: colors, borderWidth: 0 }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        cutout: '72%'
+                    }
+                });
+
+                data.expensesByCategory.slice(0, 3).forEach(item => {
+                    legend.innerHTML += `
+                        <div class="d-flex justify-content-between align-items-center mb-1 fs-8">
+                            <div>
+                                <span class="legend-dot" style="background-color: ${item.categoryColor};"></span>
+                                <span>${item.categoryName}</span>
+                            </div>
+                            <span class="fw-semibold text-white">${item.percentage.toFixed(0)}%</span>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = `<p class="text-muted text-center fs-8 my-5">Harcama verisi yok.</p>`;
+            }
+        }
+
+        function drawAssetAllocationChart(data) {
+            const el = document.getElementById('assetAllocationChartCard');
+            if (!el) return;
+            el.classList.remove('skeleton-card');
+            el.querySelector('.skeleton-block').style.display = 'none';
+            const container = el.querySelector('.chart-container');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+
+            if (assetAllocationChart) assetAllocationChart.destroy();
+
+            if (data.walletAllocations && data.walletAllocations.length > 0) {
+                container.innerHTML = `
+                    <div style="width: 140px; height: 140px;">
+                        <canvas id="assetAllocationChart"></canvas>
+                    </div>
+                    <div class="category-legend mt-2 w-100" id="assetLegend"></div>
+                `;
+                const legend = document.getElementById('assetLegend');
+                legend.innerHTML = '';
+
+                const labels = data.walletAllocations.map(x => x.walletName);
+                const amounts = data.walletAllocations.map(x => x.balance);
+                const colors = data.walletAllocations.map(x => x.walletColor);
+
+                const ctx = document.getElementById('assetAllocationChart').getContext('2d');
+                assetAllocationChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: amounts, backgroundColor: colors, borderWidth: 0 }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        cutout: '72%'
+                    }
+                });
+
+                data.walletAllocations.forEach(item => {
+                    legend.innerHTML += `
+                        <div class="d-flex justify-content-between align-items-center mb-1 fs-8">
+                            <div>
+                                <span class="legend-dot" style="background-color: ${item.walletColor};"></span>
+                                <span>${item.walletName}</span>
+                            </div>
+                            <span class="fw-semibold text-white">${item.percentage.toFixed(0)}%</span>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = `<p class="text-muted text-center fs-8 my-5">Varlık verisi yok.</p>`;
+            }
+        }
+
+        function hydrateInsights(insights) {
+            const card = document.getElementById('insightsCard');
+            card.classList.remove('skeleton-card');
+            card.querySelector('.skeleton-list').style.display = 'none';
+            const container = card.querySelector('.insights-list');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.innerHTML = '';
+
+            insights.forEach(item => {
+                let borderClass = 'border-indigo';
+                if (item.type === 'danger') borderClass = 'border-danger';
+                if (item.type === 'warning') borderClass = 'border-warning';
+                if (item.type === 'success') borderClass = 'border-success';
+
+                container.innerHTML += `
+                    <div class="p-2 border-start border-3 bg-dark-subtle rounded ${borderClass} d-flex align-items-start gap-2" style="font-size: 0.72rem; animation: slideDown 0.3s ease;">
+                        <i class="fa-solid ${item.icon} mt-1 fs-7"></i>
+                        <p class="mb-0 text-white">${item.message}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function hydrateWallets(wallets) {
+            const card = document.getElementById('walletsCard');
+            card.classList.remove('skeleton-card');
+            card.querySelector('.skeleton-list').style.display = 'none';
+            const grid = document.getElementById('walletsGrid');
+            grid.style.display = 'flex';
+            grid.innerHTML = '';
+
+            wallets.forEach(w => {
+                const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+                
+                // Deterministic card number using wallet id
+                const cardSuffix = ((w.id * 1337 + 1000) % 10000).toString().padStart(4, '0');
+                const cardNumber = `•••• •••• •••• ${cardSuffix}`;
+                
+                grid.innerHTML += `
+                    <div class="col-md-4 wallet-card-container">
+                        <div class="wallet-card-3d" style="--wallet-accent-color: ${w.color}; --wallet-glow-color: ${w.color}20;" data-wallet-id="${w.id}">
+                            <div class="card-content">
+                                <div class="wallet-card-header">
+                                    <div class="wallet-card-chip-wifi">
+                                        <div class="wallet-card-chip"></div>
+                                        <i class="fa-solid fa-wifi wallet-card-wifi"></i>
+                                    </div>
+                                    <i class="fa-solid ${w.icon} wallet-card-icon"></i>
+                                </div>
+                                <div class="wallet-card-number">${cardNumber}</div>
+                                <div class="wallet-card-footer">
+                                    <div class="wallet-card-holder">
+                                        <span class="wallet-card-label">HESAP ADI</span>
+                                        <span class="wallet-card-name">${w.name}</span>
+                                    </div>
+                                    <div class="wallet-card-balance-section">
+                                        <span class="wallet-card-label">BAKİYE</span>
+                                        <div class="wallet-card-balance">${formatter.format(w.balance)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            setupCardTilts();
+        }
+
+        function setupCardTilts() {
+            const cards = document.querySelectorAll('.wallet-card-3d');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', e => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateX = ((centerY - y) / centerY) * 12;
+                    const rotateY = ((x - centerX) / centerX) * 12;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+                });
+            });
+        }
+
+        function populateTransferModalSelects(wallets) {
+            const fromSelect = document.getElementById('fromWalletSelect');
+            const toSelect = document.getElementById('toWalletSelect');
+            
+            fromSelect.innerHTML = '<option value="">Gönderen Cüzdan</option>';
+            toSelect.innerHTML = '<option value="">Alıcı Cüzdan</option>';
+
+            wallets.forEach(w => {
+                const opt = `<option value="${w.id}">${w.name} (${w.balance.toLocaleString('tr-TR')} ₺)</option>`;
+                fromSelect.innerHTML += opt;
+                toSelect.innerHTML += opt;
+            });
+        }
+
+        // Bakiye Transfer Formu Submit (AJAX)
+        document.getElementById('transferForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const transferData = {
+                fromWalletId: parseInt(formData.get('FromWalletId')),
+                toWalletId: parseInt(formData.get('ToWalletId')),
+                amount: parseFloat(formData.get('Amount'))
+            };
+
+            if (transferData.fromWalletId === transferData.toWalletId) {
+                alert("Aynı cüzdanlar arasında transfer yapılamaz.");
+                return;
+            }
+
+            fetch('/api/wallets/transfer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(transferData)
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (res.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('transferModal')).hide();
+                    this.reset();
+                    window.addNotification(data.message, 'success');
+                    refreshDashboard();
+                } else {
+                    alert(data.message || "Transfer başarısız.");
+                }
+            })
+            .catch(err => console.error(err));
+        });
+
+        function hydrateRecentTransactions(data) {
+            const card = document.getElementById('transactionsListCard');
+            card.classList.remove('skeleton-card');
+            card.querySelector('.skeleton-list').style.display = 'none';
+            const list = card.querySelector('.transaction-list');
+            list.style.display = 'block';
+            list.innerHTML = '';
+
+            const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+
+            if (data.recentTransactions.length > 0) {
+                data.recentTransactions.forEach(t => {
+                    const typeSign = t.type === 0 ? '+' : '-';
+                    const typeClass = t.type === 0 ? 'text-success' : 'text-danger';
+                    const dateFormatted = new Date(t.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+
+                    list.innerHTML += `
+                        <div class="transaction-item d-flex align-items-center justify-content-between py-2 border-bottom border-dark-subtle">
+                            <div class="d-flex align-items-center">
+                                <div class="category-icon-wrapper me-2" style="background-color: ${t.categoryColor}15; border: 1px solid ${t.categoryColor}; width: 32px; height: 32px; font-size: 0.85rem;">
+                                    <i class="fa-solid ${t.categoryIcon || 'fa-tag'}" style="color: ${t.categoryColor};"></i>
+                                </div>
+                                <div>
+                                    <h4 class="transaction-title text-white mb-0 fs-8">${t.description}</h4>
+                                    <span class="transaction-meta text-muted fs-9">${t.categoryName} &bull; ${t.walletName}</span>
+                                </div>
+                            </div>
+                            <span class="fw-bold ${typeClass} fs-8" style="white-space: nowrap;">${typeSign}${formatter.format(t.amount)}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = `<p class="text-muted text-center py-4 fs-8">Kayıt bulunamadı.</p>`;
+            }
+        }
+
+        function hydrateBudgets(data) {
+            const card = document.getElementById('budgetsListCard');
+            card.classList.remove('skeleton-card');
+            card.querySelector('.skeleton-list').style.display = 'none';
+            const list = card.querySelector('.budget-progress-list');
+            list.style.display = 'block';
+            list.innerHTML = '';
+
+            if (data.budgetProgresses.length > 0) {
+                data.budgetProgresses.forEach(b => {
+                    let progressColor = "bg-indigo";
+                    if (b.progressPercentage >= 95) progressColor = "bg-danger";
+                    else if (b.progressPercentage >= 75) progressColor = "bg-warning";
+
+                    list.innerHTML += `
+                        <div class="budget-item mb-2" style="font-size: 0.72rem;">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-white">${b.categoryName}</span>
+                                <span class="text-muted">${b.spentAmount.toLocaleString('tr-TR')} ₺ / ${b.budgetAmount.toLocaleString('tr-TR')} ₺</span>
+                            </div>
+                            <div class="progress custom-progress">
+                                <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${Math.min(b.progressPercentage, 100)}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = `<p class="text-muted text-center py-4 fs-8">Bütçe limitleri yok.</p>`;
+            }
+        }
+
+        function hydrateGoalsList(goals) {
+            const card = document.getElementById('goalsListCard');
+            card.classList.remove('skeleton-card');
+            card.querySelector('.skeleton-list').style.display = 'none';
+            const list = card.querySelector('.goals-list');
+            list.style.display = 'block';
+            list.innerHTML = '';
+
+            if (goals.length > 0) {
+                goals.forEach(g => {
+                    const percent = Math.min(g.progressPercentage, 100);
+                    const targetDateStr = new Date(g.targetDate).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+                    list.innerHTML += `
+                        <div class="goal-item mb-3 border-bottom border-dark-subtle pb-2" style="font-size: 0.72rem;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-white fw-bold">${g.title}</span>
+                                <span class="text-indigo fw-bold">${percent.toFixed(0)}%</span>
+                            </div>
+                            <div class="progress custom-progress">
+                                <div class="progress-bar bg-indigo" role="progressbar" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1 text-muted-dark fs-9">
+                                <span>${g.currentAmount.toLocaleString('tr-TR')} ₺ birikti / ${g.targetAmount.toLocaleString('tr-TR')} ₺</span>
+                                <span class="goal-eta-text text-indigo fw-semibold" id="goal-eta-${g.id}">AI ETA: Yükleniyor...</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1 text-muted-dark fs-9">
+                                <span>Hedef Tarih: ${targetDateStr}</span>
+                                <button class="btn btn-link btn-sm text-indigo p-0 fs-9 text-decoration-none" onclick="contributeFromHome(${g.id}, '${g.title}')">+ Para Ekle</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = `<p class="text-muted text-center py-4 fs-8">Hedef yok.</p>`;
+            }
+        }
+
+        // Global contribute function
+        window.contributeFromHome = function(id, title) {
+            const amountStr = prompt(`"${title}" hedefine eklenecek birikim tutarı (₺):`);
+            if (amountStr === null) return;
+            const amount = parseFloat(amountStr);
+            if (isNaN(amount) || amount <= 0) {
+                alert("Lütfen geçerli miktar girin.");
+                return;
+            }
+
+            fetch(`/api/goals/${id}/contribute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(amount)
+            })
+            .then(res => {
+                if (res.ok) {
+                    window.addNotification(`"${title}" hedefine ${amount} ₺ başarıyla aktarıldı!`, 'success');
+                    refreshDashboard();
+                } else {
+                    alert("Para ekleme başarısız.");
+                }
+            });
+        };
+
+        // Wallet manager modal functions
+        let managerWalletsCached = [];
+        window.openWalletManagerModal = function() {
+            const modal = new bootstrap.Modal(document.getElementById('walletManagerModal'));
+            modal.show();
+            loadManagerWallets();
+        };
+
+        function loadManagerWallets() {
+            fetch('/api/wallets')
+                .then(res => res.json())
+                .then(wallets => {
+                    managerWalletsCached = wallets;
+                    populateManagerWalletList(wallets);
+                })
+                .catch(err => console.error(err));
+        }
+
+        function populateManagerWalletList(wallets) {
+            const container = document.getElementById('managerWalletList');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (wallets.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center py-4 fs-8">Hiç cüzdan bulunamadı.</p>';
+                return;
+            }
+
+            wallets.forEach(w => {
+                const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+                container.innerHTML += `
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded bg-dark border border-dark-subtle mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="category-icon-wrapper" style="background-color: ${w.color}20; color: ${w.color}; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+                                <i class="fa-solid ${w.icon}"></i>
+                            </span>
+                            <div>
+                                <span class="fw-bold text-white fs-8 d-block">${w.name}</span>
+                                <span class="fs-9 ${w.balance >= 0 ? 'text-success' : 'text-danger'}">${formatter.format(w.balance)}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-outline-info btn-icon btn-sm" onclick="startEditWallet(${w.id})"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button type="button" class="btn btn-outline-danger btn-icon btn-sm" onclick="deleteWallet(${w.id})"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        window.startEditWallet = function(id) {
+            const w = managerWalletsCached.find(x => x.id === id);
+            if (!w) return;
+
+            document.getElementById('walletFormTitle').textContent = 'Cüzdanı Düzenle';
+            document.getElementById('walletFormId').value = w.id;
+            document.getElementById('walletFormName').value = w.name;
+            document.getElementById('walletFormBalance').value = w.balance;
+            document.getElementById('walletFormColor').value = w.color;
+            document.getElementById('walletFormIcon').value = w.icon;
+
+            document.getElementById('walletFormSubmitBtn').textContent = 'Güncelle';
+            document.getElementById('walletFormCancelBtn').style.setProperty('display', 'inline-block', 'important');
+        };
+
+        window.cancelWalletEdit = function() {
+            document.getElementById('walletFormTitle').textContent = 'Yeni Cüzdan Ekle';
+            document.getElementById('walletFormId').value = '';
+            document.getElementById('walletForm').reset();
+
+            document.getElementById('walletFormSubmitBtn').textContent = 'Ekle';
+            document.getElementById('walletFormCancelBtn').style.setProperty('display', 'none', 'important');
+        };
+
+        window.deleteWallet = function(id) {
+            if (confirm("Bu cüzdanı silmek istediğinizden emin misiniz? Bu cüzdana ait tüm işlemler de silinecektir.")) {
+                fetch(`/api/wallets/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(res => {
+                    if (res.ok) {
+                        window.addNotification("Cüzdan başarıyla silindi.", 'info');
+                        loadManagerWallets();
+                        refreshDashboard();
+                        if (typeof window.loadLayoutWallets === "function") {
+                            window.loadLayoutWallets();
+                        }
+                    } else {
+                        alert("Cüzdan silinemedi.");
+                    }
+                })
+                .catch(err => console.error(err));
+            }
+        };
+
+        function setupWalletManagerForm() {
+            const walletForm = document.getElementById('walletForm');
+            if (walletForm) {
+                walletForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const submitBtn = document.getElementById('walletFormSubmitBtn');
+                    if (submitBtn) submitBtn.disabled = true;
+                    
+                    const idVal = document.getElementById('walletFormId').value;
+                    const isEdit = idVal !== "";
+                    
+                    const walletData = {
+                        name: document.getElementById('walletFormName').value,
+                        balance: parseFloat(document.getElementById('walletFormBalance').value),
+                        color: document.getElementById('walletFormColor').value,
+                        icon: document.getElementById('walletFormIcon').value
+                    };
+
+                    if (isEdit) {
+                        walletData.id = parseInt(idVal);
+                    }
+
+                    const url = isEdit ? `/api/wallets/${idVal}` : '/api/wallets';
+                    const method = isEdit ? 'PUT' : 'POST';
+
+                    fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(walletData)
+                    })
+                    .then(res => {
+                        if (res.ok) {
+                            window.addNotification(isEdit ? "Cüzdan başarıyla güncellendi!" : "Cüzdan başarıyla eklendi!", 'success');
+                            cancelWalletEdit();
+                            loadManagerWallets();
+                            refreshDashboard();
+                            if (typeof window.loadLayoutWallets === "function") {
+                                window.loadLayoutWallets();
+                            }
+                            
+                            // Close the modal on successful add/update
+                            const modalEl = document.getElementById('walletManagerModal');
+                            if (modalEl) {
+                                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                                if (modalInstance) {
+                                    modalInstance.hide();
+                                }
+                            }
+                        } else {
+                            alert("Cüzdan kaydedilirken bir hata oluştu.");
+                        }
+                    })
+                    .catch(err => console.error(err))
+                    .finally(() => {
+                        if (submitBtn) submitBtn.disabled = false;
+                    });
+                });
+            }
+        }
+
+        // ------------------ PREMIUM WIDGETS SCRIPTS ------------------
+        function setupPremiumFeatures() {
+            try { initSparklines(); } catch (e) { console.error("Error in initSparklines:", e); }
+            try { initSimulator(); } catch (e) { console.error("Error in initSimulator:", e); }
+            try {
+                if (typeof fetchLiveMarketRates === "function") {
+                    fetchLiveMarketRates();
+                }
+            } catch (e) { console.error("Error in fetchLiveMarketRates:", e); }
+            try { startRatesTicker(); } catch (e) { console.error("Error in startRatesTicker:", e); }
+            try { setupWealthyChatbot(); } catch (e) { console.error("Error in setupWealthyChatbot:", e); }
+            try { initAdvancedFinances(); } catch (e) { console.error("Error in initAdvancedFinances:", e); }
+            try { setupWalletManagerForm(); } catch (e) { console.error("Error in setupWalletManagerForm:", e); }
+            
+            // Tema değişim dinleyicisi
+            document.addEventListener("accentThemeChanged", function(e) {
+                const primaryColor = e.detail.colors.primary;
+                if (simChart) {
+                    simChart.data.datasets[1].backgroundColor = primaryColor;
+                    simChart.data.datasets[1].borderColor = primaryColor;
+                    simChart.update();
+                }
+                
+                // Sağlık skoru dairesini de güncelle (Eğer orta tier'daysa)
+                const textEl = document.getElementById('healthScoreText');
+                if (textEl) {
+                    const score = parseInt(textEl.textContent || "0");
+                    if (score >= 60 && score < 80) {
+                        const circle = document.getElementById('healthScoreCircle');
+                        if (circle) circle.style.stroke = primaryColor;
+                    }
+                }
+            });
+        }
+
+        function initSparklines() {
+            const getSparklineConfig = (data, color) => ({
+                type: 'line',
+                data: {
+                    labels: [1, 2, 3, 4, 5, 6, 7],
+                    datasets: [{
+                        data: data,
+                        borderColor: color,
+                        borderWidth: 1.5,
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+
+            try {
+                const usdCtx = document.getElementById('usdSparkline').getContext('2d');
+                usdSparklineChart = new Chart(usdCtx, getSparklineConfig(usdHistory, '#10b981'));
+
+                const eurCtx = document.getElementById('eurSparkline').getContext('2d');
+                eurSparklineChart = new Chart(eurCtx, getSparklineConfig(eurHistory, '#ef4444'));
+
+                const goldCtx = document.getElementById('goldSparkline').getContext('2d');
+                goldSparklineChart = new Chart(goldCtx, getSparklineConfig(goldHistory, '#10b981'));
+            } catch (err) {
+                console.error("Sparkline çizim hatası:", err);
+            }
+        }
+
+        function fetchLiveMarketRates() {
+            fetch('https://api.exchangerate-api.com/v4/latest/USD')
+                .then(res => {
+                    if (!res.ok) throw new Error("Currency rates API error");
+                    return res.json();
+                })
+                .then(currencyData => {
+                    const usd_try = currencyData.rates.TRY || 45.90;
+                    const eur_usd = currencyData.rates.EUR || 0.858;
+                    const eur_try = usd_try / eur_usd;
+                    
+                    usdVal = usd_try;
+                    eurVal = eur_try;
+                    
+                    return fetch('https://api.gold-api.com/price/XAU')
+                        .then(res => {
+                            if (!res.ok) throw new Error("Gold API error");
+                            return res.json();
+                        })
+                        .then(goldData => {
+                            const gold_usd = goldData.price || 4471.0;
+                            const gold_gram_try = (gold_usd / 31.1034768) * usd_try;
+                            goldVal = gold_gram_try;
+                            
+                            usdHistory = [usdVal - 0.15, usdVal - 0.08, usdVal - 0.05, usdVal - 0.02, usdVal + 0.01, usdVal];
+                            eurHistory = [eurVal - 0.20, eurVal - 0.12, eurVal - 0.08, eurVal - 0.04, eurVal + 0.02, eurVal];
+                            goldHistory = [goldVal - 30.0, goldVal - 15.0, goldVal - 25.0, goldVal - 10.0, goldVal + 5.0, goldVal];
+                            
+                            if (usdSparklineChart) {
+                                usdSparklineChart.data.datasets[0].data = usdHistory;
+                                usdSparklineChart.update();
+                            }
+                            if (eurSparklineChart) {
+                                eurSparklineChart.data.datasets[0].data = eurHistory;
+                                eurSparklineChart.update();
+                            }
+                            if (goldSparklineChart) {
+                                goldSparklineChart.data.datasets[0].data = goldHistory;
+                                goldSparklineChart.update();
+                            }
+
+                            updateTickerUI('usd', usdVal, "+0.06%", true);
+                            updateTickerUI('eur', eurVal, "-0.01%", false);
+                            updateTickerUI('gold', goldVal, "+0.36%", true, true);
+                        });
+                })
+                .catch(err => {
+                    console.warn("Canlı döviz/altın fiyatları çekilemedi, varsayılan kurlar kullanılacak:", err);
+                    updateTickerUI('usd', usdVal, "+0.06%", true);
+                    updateTickerUI('eur', eurVal, "-0.01%", false);
+                    updateTickerUI('gold', goldVal, "+0.36%", true, true);
+                });
+        }
+
+        function startRatesTicker() {
+            if (window.wealthflowRatesInterval) {
+                clearInterval(window.wealthflowRatesInterval);
+            }
+            
+            window.wealthflowRatesInterval = setInterval(() => {
+                // USD
+                const usdDiff = (Math.random() - 0.48) * 0.05;
+                const usdOld = usdVal;
+                usdVal += usdDiff;
+                const usdPercent = ((usdVal - 45.90) / 45.90 * 100).toFixed(2);
+                updateTickerUI('usd', usdVal, usdPercent, usdVal > usdOld);
+                updateSparkline(usdSparklineChart, usdVal);
+
+                // EUR
+                const eurDiff = (Math.random() - 0.52) * 0.05;
+                const eurOld = eurVal;
+                eurVal += eurDiff;
+                const eurPercent = ((eurVal - 53.50) / 53.50 * 100).toFixed(2);
+                updateTickerUI('eur', eurVal, eurPercent, eurVal > eurOld);
+                updateSparkline(eurSparklineChart, eurVal);
+
+                // Gold
+                const goldDiff = (Math.random() - 0.45) * 4.0;
+                const goldOld = goldVal;
+                goldVal += goldDiff;
+                const goldPercent = ((goldVal - 6600.0) / 6600.0 * 100).toFixed(2);
+                updateTickerUI('gold', goldVal, goldPercent, goldVal > goldOld, true);
+                updateSparkline(goldSparklineChart, goldVal);
+            }, 4000);
+        }
+
+        function updateTickerUI(id, val, pct, isUp, isInt = false) {
+            const valueEl = document.getElementById(`${id}-value`);
+            const changeEl = document.getElementById(`${id}-change`);
+            const cardEl = document.getElementById(`rate-${id}`);
+            
+            if (!valueEl || !changeEl || !cardEl) return;
+            
+            valueEl.textContent = isInt 
+                ? val.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ' ₺'
+                : val.toFixed(4) + ' ₺';
+                
+            changeEl.textContent = (pct >= 0 ? '+' : '') + pct + '%';
+            if (pct >= 0) {
+                changeEl.className = 'rate-badge text-success fs-9 fw-semibold';
+            } else {
+                changeEl.className = 'rate-badge text-danger fs-9 fw-semibold';
+            }
+            
+            const flashClass = isUp ? 'rate-tick-up' : 'rate-tick-down';
+            cardEl.classList.remove('rate-tick-up', 'rate-tick-down');
+            void cardEl.offsetWidth; // trigger reflow
+            cardEl.classList.add(flashClass);
+        }
+
+        function updateSparkline(chart, newVal) {
+            if (!chart) return;
+            const data = chart.data.datasets[0].data;
+            data.shift();
+            data.push(newVal);
+            
+            const isTrendUp = data[data.length - 1] >= data[0];
+            chart.data.datasets[0].borderColor = isTrendUp ? '#10b981' : '#ef4444';
+            chart.update();
+        }
+
+        function initSimulator() {
+            const sliderSavings = document.getElementById('sliderSavings');
+            const sliderGrowth = document.getElementById('sliderGrowth');
+            const sliderYears = document.getElementById('sliderYears');
+            
+            if (!sliderSavings) return;
+            
+            [sliderSavings, sliderGrowth, sliderYears].forEach(slider => {
+                slider.addEventListener('input', runSimulation);
+            });
+            
+            runSimulation();
+        }
+
+        function runSimulation() {
+            const savings = parseFloat(document.getElementById('sliderSavings').value);
+            const growth = parseFloat(document.getElementById('sliderGrowth').value) / 100;
+            const years = parseInt(document.getElementById('sliderYears').value);
+            
+            document.getElementById('sliderValSavings').textContent = savings.toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('sliderValGrowth').textContent = '%' + (growth * 100).toFixed(0);
+            document.getElementById('sliderValYears').textContent = years + ' Yıl';
+            
+            let principal = 0;
+            let futureValue = 0;
+            const principalData = [];
+            const growthData = [];
+            const labels = [];
+            
+            for (let y = 1; y <= years; y++) {
+                for (let m = 0; m < 12; m++) {
+                    futureValue = (futureValue + savings) * (1 + growth / 12);
+                    principal += savings;
+                }
+                
+                labels.push(`${y}. Yıl`);
+                principalData.push(Math.round(principal));
+                growthData.push(Math.round(futureValue - principal));
+            }
+            
+            document.getElementById('simValPrincipal').textContent = Math.round(principal).toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('simValTotal').textContent = Math.round(futureValue).toLocaleString('tr-TR') + ' ₺';
+            
+            updateSimChart(labels, principalData, growthData);
+        }
+
+        function updateSimChart(labels, principalData, growthData) {
+            const canvas = document.getElementById('simChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-indigo').trim() || '#6366f1';
+            
+            if (simChart) {
+                simChart.data.labels = labels;
+                simChart.data.datasets[0].data = principalData;
+                simChart.data.datasets[1].data = growthData;
+                simChart.data.datasets[1].backgroundColor = primaryColor;
+                simChart.data.datasets[1].borderColor = primaryColor;
+                simChart.update();
+            } else {
+                simChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Toplam Birikim (Anapara)',
+                                data: principalData,
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                borderColor: 'rgba(255, 255, 255, 0.15)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Faiz / Büyüme Getirisi',
+                                data: growthData,
+                                backgroundColor: primaryColor,
+                                borderColor: primaryColor,
+                                borderWidth: 1,
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#94A3B8', font: { family: 'Inter', size: 10 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) label += ': ';
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y.toLocaleString('tr-TR') + ' ₺';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                grid: { display: false },
+                                ticks: { color: '#94A3B8', font: { family: 'Inter', size: 9 } }
+                            },
+                            y: {
+                                stacked: true,
+                                grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                                ticks: {
+                                    color: '#94A3B8',
+                                    font: { family: 'Inter', size: 9 },
+                                    callback: function(value) {
+                                        return (value / 1000).toLocaleString() + 'k ₺';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ------------------ SUBSCRIPTION SIMULATION & CHATBOT SCRIPTS ------------------
+        let activeCancelledSubs = [];
+
+        function hydrateSubscriptions(subs) {
+            const card = document.getElementById('subscriptionsCard');
+            if (!card) return;
+            card.classList.remove('skeleton-card');
+            card.querySelector('.skeleton-list').style.display = 'none';
+            const grid = document.getElementById('subscriptionsGrid');
+            grid.style.display = 'flex';
+            grid.innerHTML = '';
+
+            activeCancelledSubs = [];
+            document.getElementById('simSavingsTotal').textContent = '0.00 ₺';
+
+            subs.forEach(s => {
+                grid.innerHTML += `
+                    <div class="col-md-3">
+                        <div class="subscription-card ${s.brandClass}">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="sub-card-logo-container">
+                                    <i class="fa-solid ${s.icon}"></i>
+                                </div>
+                                <button class="btn-simulate-cancel" data-name="${s.name}" data-amount="${s.amount}">İptal Simüle Et</button>
+                            </div>
+                            <h4 class="text-white fs-8 fw-bold mb-1">${s.name}</h4>
+                            <div class="text-muted fs-9 mb-1">Tutar: <span class="text-white fw-semibold">${s.amount} ₺ / ay</span></div>
+                            <div class="text-muted-dark fs-9">Sonraki Ödeme: ${s.nextPaymentDate}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Event listener'ları bağla
+            const buttons = grid.querySelectorAll('.btn-simulate-cancel');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const name = this.getAttribute('data-name');
+                    const isSimulated = this.classList.toggle('simulated-active');
+                    
+                    if (isSimulated) {
+                        this.textContent = 'Simüle Edildi 🚫';
+                        activeCancelledSubs.push(name);
+                    } else {
+                        this.textContent = 'İptal Simüle Et';
+                        activeCancelledSubs = activeCancelledSubs.filter(n => n !== name);
+                    }
+
+                    runSimulationEta(activeCancelledSubs);
+                });
+            });
+        }
+
+        function runSimulationEta(cancelledNames) {
+            fetch('/api/subscriptions/simulate-eta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cancelledNames: cancelledNames })
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Simülasyon Tasarrufu badge'ini güncelle
+                document.getElementById('simSavingsTotal').textContent = data.cancelledTotal.toLocaleString('tr-TR') + ' ₺';
+                
+                // Hedeflerin ETA yazılarını güncelle
+                data.results.forEach(r => {
+                    const etaTextEl = document.getElementById(`goal-eta-${r.goalId}`);
+                    if (etaTextEl) {
+                        const originalText = etaTextEl.textContent;
+                        let newText = `AI ETA: ${r.newEta}`;
+                        if (r.monthsSaved > 0) {
+                            newText += ` (🎉 ${r.monthsSaved} Ay Kazanç!)`;
+                        }
+                        etaTextEl.textContent = newText;
+                        
+                        // Flashing animation trigger
+                        if (originalText !== newText) {
+                            etaTextEl.classList.remove('eta-highlight-saved');
+                            void etaTextEl.offsetWidth; // Reflow trigger
+                            etaTextEl.classList.add('eta-highlight-saved');
+                        }
+                    }
+                });
+            })
+            .catch(err => console.error("Simülasyon hatası:", err));
+        }
+
+        function formatMarkdown(text) {
+            if (!text) return "";
+            let html = text;
+            // Format Headings (### Title)
+            html = html.replace(/^### (.*$)/gim, '<h4 class="fs-8 fw-bold mt-2 text-indigo">$1</h4>');
+            // Format Bold (**text**)
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Format Bullet points (* or - item with optional leading spaces)
+            html = html.replace(/^\s*[\*\-] (.*$)/gim, '<li>$1</li>');
+            html = html.replace(/<li>(.*?)<\/li>/g, '<ul><li>$1</li></ul>');
+            html = html.replace(/<\/ul>\s*<ul>/g, ''); // Clean consecutive <ul> tags
+            return html;
+        }
+
+        function setupWealthyChatbot() {
+            const toggleBtn = document.getElementById('wealthyChatToggleBtn');
+            const chatWindow = document.getElementById('wealthyChatWindow');
+            const closeBtn = document.getElementById('wealthyChatCloseBtn');
+            const chatForm = document.getElementById('wealthyChatForm');
+            const chatInput = document.getElementById('wealthyChatInput');
+            const messagesContainer = document.getElementById('wealthyChatMessages');
+
+            if (!toggleBtn || !chatWindow) return;
+
+            toggleBtn.addEventListener('click', () => {
+                chatWindow.classList.toggle('active');
+                if (chatWindow.classList.contains('active')) {
+                    chatInput.focus();
+                    scrollToBottom();
+                }
+            });
+
+            closeBtn.addEventListener('click', () => {
+                chatWindow.classList.remove('active');
+            });
+
+            // Quick queries click actions
+            document.addEventListener('click', (e) => {
+                const quickQueryBtn = e.target.closest('.chat-quick-query');
+                if (quickQueryBtn) {
+                    const query = quickQueryBtn.getAttribute('data-query');
+                    chatInput.value = query;
+                    chatForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (!text) return;
+
+                // User message append
+                appendMessage(text, 'user');
+                chatInput.value = '';
+                scrollToBottom();
+
+                // Append typing indicator
+                const typingId = appendTypingIndicator();
+                scrollToBottom();
+
+                // POST query
+                fetch('/api/insights/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    removeTypingIndicator(typingId);
+                    appendMessage(data.response, 'bot', true);
+                    scrollToBottom();
+                })
+                .catch(err => {
+                    removeTypingIndicator(typingId);
+                    appendMessage("Bir hata oluştu, lütfen daha sonra tekrar deneyin.", 'bot');
+                    scrollToBottom();
+                    console.error(err);
+                });
+            });
+
+            function appendMessage(content, sender, isMarkdown = false) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('chat-bubble', sender);
+                if (isMarkdown) {
+                    bubble.innerHTML = formatMarkdown(content);
+                } else {
+                    bubble.textContent = content;
+                }
+                messagesContainer.appendChild(bubble);
+            }
+
+            function appendTypingIndicator() {
+                const indicatorId = 'typing-' + Date.now();
+                const wrapper = document.createElement('div');
+                wrapper.id = indicatorId;
+                wrapper.classList.add('chat-bubble', 'bot');
+                wrapper.innerHTML = `
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                `;
+                messagesContainer.appendChild(wrapper);
+                return indicatorId;
+            }
+
+            function removeTypingIndicator(id) {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            }
+
+            function scrollToBottom() {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        let besChart = null;
+        let exposureChart = null;
+        let debtPlanData = null; // Store for toggling snowball/avalanche
+
+        function initAdvancedFinances() {
+            // 1. BES Simulator Sliders
+            const besSliderPayment = document.getElementById('besSliderPayment');
+            const besSliderYears = document.getElementById('besSliderYears');
+            
+            if (besSliderPayment) {
+                [besSliderPayment, besSliderYears].forEach(slider => {
+                    slider.addEventListener('input', runBesSimulation);
+                });
+            }
+
+            // Debt strategy button event listeners
+            const btnSnowball = document.getElementById('btnDebtSnowball');
+            const btnAvalanche = document.getElementById('btnDebtAvalanche');
+            if (btnSnowball) {
+                btnSnowball.addEventListener('click', () => {
+                    btnSnowball.classList.add('active');
+                    btnAvalanche.classList.remove('active');
+                    renderDebtStrategy("snowball");
+                });
+                btnAvalanche.addEventListener('click', () => {
+                    btnAvalanche.classList.add('active');
+                    btnSnowball.classList.remove('active');
+                    renderDebtStrategy("avalanche");
+                });
+            }
+
+            // İlk verileri çek
+            refreshAdvancedFinances();
+        }
+
+        function refreshAdvancedFinances() {
+            runBesSimulation();
+
+            // 2. Fetch Tax Brackets
+            fetch('/api/advanced-finances/tax-bracket')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('taxAnnualIncome').textContent = Math.round(data.estAnnualIncome).toLocaleString('tr-TR') + ' ₺';
+                    document.getElementById('taxBracketPercent').textContent = '%' + data.taxRate;
+                    document.getElementById('taxDueVal').textContent = Math.round(data.taxDue).toLocaleString('tr-TR') + ' ₺';
+                    
+                    const tbody = document.getElementById('taxTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = '';
+                        data.bracketDetails.forEach(d => {
+                            tbody.innerHTML += `
+                                <tr>
+                                    <td><span class="fw-bold text-white">${d.name}</span></td>
+                                    <td>${d.limit}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                });
+
+            // 3. Fetch Debt Plan
+            fetch('/api/advanced-finances/debt-plan')
+                .then(res => res.json())
+                .then(data => {
+                    debtPlanData = data;
+                    document.getElementById('debtTotalAmount').textContent = data.totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+                    
+                    const container = document.getElementById('debtListContainer');
+                    if (container) {
+                        container.innerHTML = '';
+                        if (data.debtItems.length === 0) {
+                            container.innerHTML = '<p class="text-success text-center py-3 fs-8">Borç bulunmuyor 🎉</p>';
+                        } else {
+                            data.debtItems.forEach(item => {
+                                container.innerHTML += `
+                                    <div class="d-flex justify-content-between align-items-center p-2 rounded bg-dark-subtle border-start border-3" style="border-left-color: ${item.color} !important; border-top: 1px solid rgba(255,255,255,0.01); border-right: 1px solid rgba(255,255,255,0.01); border-bottom: 1px solid rgba(255,255,255,0.01); margin-bottom: 6px;">
+                                        <span class="text-white fw-medium fs-8">${item.name}</span>
+                                        <span class="fw-bold text-danger fs-8">${item.balance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</span>
+                                    </div>
+                                `;
+                            });
+                        }
+                    }
+                    
+                    const btnSnowball = document.getElementById('btnDebtSnowball');
+                    const activeStrategy = btnSnowball && btnSnowball.classList.contains('active') ? 'snowball' : 'avalanche';
+                    renderDebtStrategy(activeStrategy);
+                });
+
+            // 4. Fetch FIRE Info
+            fetch('/api/advanced-finances/fire-calculator')
+                .then(res => res.json())
+                .then(data => {
+                    const percent = Math.min(data.progressPercent, 100);
+                    document.getElementById('fireProgressPercent').textContent = '%' + percent.toFixed(2);
+                    const bar = document.getElementById('fireProgressBar');
+                    if (bar) bar.style.width = percent + '%';
+                    
+                    document.getElementById('fireProgressSub').textContent = 
+                        `${data.totalAssets.toLocaleString('tr-TR')} ₺ birikti / FIRE Sayısı: ${data.fireNumber.toLocaleString('tr-TR')} ₺`;
+                    
+                    document.getElementById('fireMonthlyExpense').textContent = Math.round(data.avgMonthlyExpense).toLocaleString('tr-TR') + ' ₺';
+                    document.getElementById('fireAnnualExpense').textContent = Math.round(data.annualExpense).toLocaleString('tr-TR') + ' ₺';
+                    document.getElementById('fireNumberVal').textContent = Math.round(data.fireNumber).toLocaleString('tr-TR') + ' ₺';
+                    document.getElementById('fireYearsVal').textContent = data.yearsToFire + ' Yıl';
+                });
+
+            // 5. Fetch Currency Exposure
+            fetch('/api/advanced-finances/currency-exposure')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('exposureHedgeRatePercent').textContent = `Hedge Oranı: %${data.hedgeRatio.toFixed(1)}`;
+                    document.getElementById('exposureRecommendationText').textContent = data.recommendation;
+                    
+                    document.getElementById('exposureTRYVal').textContent = data.tryAssets.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' ₺';
+                    document.getElementById('exposureUSDVal').textContent = data.usdAssets.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' ₺';
+                    document.getElementById('exposureGoldVal').textContent = data.goldAssets.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' ₺';
+                    
+                    drawExposureChart(data.tryAssets, data.usdAssets, data.goldAssets);
+                });
+        }
+
+        function runBesSimulation() {
+            const payment = parseFloat(document.getElementById('besSliderPayment').value);
+            const years = parseInt(document.getElementById('besSliderYears').value);
+            
+            document.getElementById('besSliderValVal').textContent = payment.toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('besSliderValYears').textContent = years + ' Yıl';
+
+            fetch(`/api/advanced-finances/bes-simulator?monthlyPayment=${payment}&years=${years}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('besTotalPrincipal').textContent = Math.round(data.totalPrincipal).toLocaleString('tr-TR') + ' ₺';
+                    document.getElementById('besTotalGov').textContent = Math.round(data.totalGovContribution).toLocaleString('tr-TR') + ' ₺';
+                    document.getElementById('besEstimatedWealth').textContent = Math.round(data.estimatedWealth).toLocaleString('tr-TR') + ' ₺';
+                    
+                    const labels = data.projections.map(p => `${p.year}. Yıl`);
+                    const principalData = data.projections.map(p => Math.round(p.totalPrincipal));
+                    const govData = data.projections.map(p => Math.round(p.totalGovContribution));
+                    const wealthData = data.projections.map(p => Math.round(p.estimatedWealth));
+                    
+                    updateBesChart(labels, principalData, govData, wealthData);
+                });
+        }
+
+        function updateBesChart(labels, principalData, govData, wealthData) {
+            const canvas = document.getElementById('besChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            if (besChart) {
+                besChart.data.labels = labels;
+                besChart.data.datasets[0].data = principalData;
+                besChart.data.datasets[1].data = govData;
+                besChart.data.datasets[2].data = wealthData;
+                besChart.update();
+            } else {
+                besChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Ana Para',
+                                data: principalData,
+                                borderColor: 'rgba(255, 255, 255, 0.4)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Devlet Katkısı',
+                                data: govData,
+                                borderColor: '#10b981',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Tahmini Varlık',
+                                data: wealthData,
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                                fill: true,
+                                borderWidth: 3,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { color: '#94a3b8', font: { size: 10 } }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+                            y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderDebtStrategy(strategy) {
+            if (!debtPlanData) return;
+            
+            const explain = document.getElementById('debtStrategyExplain');
+            const container = document.getElementById('debtPaydownStepsContainer');
+            if (!explain || !container) return;
+            
+            container.innerHTML = '';
+            
+            if (strategy === "snowball") {
+                explain.innerHTML = `<strong>Snowball (Kartopu) Yöntemi:</strong> Borçlarınızı en küçükten başlayarak kapatırsınız. Bu yöntem psikolojik olarak motivasyon sağlar. Aylık ortalama <strong>${debtPlanData.avgMonthlySavings.toLocaleString('tr-TR')} ₺</strong> tasarrufunuzla borç sırası:`;
+                
+                if (debtPlanData.snowballSteps.length === 0) {
+                    container.innerHTML = '<p class="text-success fs-8">Ödenecek borç yok.</p>';
+                } else {
+                    debtPlanData.snowballSteps.forEach((step, idx) => {
+                        container.innerHTML += `
+                            <div class="timeline-step-item">
+                                <div>
+                                    <span class="text-white fw-bold d-block">${idx + 1}. Adım: ${step.walletName}</span>
+                                    <span class="text-muted-dark d-block">Tutar: ${step.amount.toLocaleString('tr-TR')} ₺ | Süre: ${step.months} Ay</span>
+                                    <span class="badge bg-indigo-soft text-indigo mt-1" style="font-size: 0.55rem;">${step.strategy}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } else {
+                explain.innerHTML = `<strong>Avalanche (Çığ) Yöntemi:</strong> Faiz oranı en yüksek olan borçtan başlarsınız. Matematiksel olarak en az faizi ödeyeceğiniz yöntemdir. Aylık ortalama <strong>${debtPlanData.avgMonthlySavings.toLocaleString('tr-TR')} ₺</strong> tasarrufunuzla borç sırası:`;
+                
+                if (debtPlanData.avalancheSteps.length === 0) {
+                    container.innerHTML = '<p class="text-success fs-8">Ödenecek borç yok.</p>';
+                } else {
+                    debtPlanData.avalancheSteps.forEach((step, idx) => {
+                        container.innerHTML += `
+                            <div class="timeline-step-item">
+                                <div>
+                                    <span class="text-white fw-bold d-block">${idx + 1}. Adım: ${step.walletName}</span>
+                                    <span class="text-muted-dark d-block">Tutar: ${step.amount.toLocaleString('tr-TR')} ₺ | Yıllık Faiz: %${step.interestRate} | Süre: ${step.months} Ay</span>
+                                    <span class="badge bg-danger-soft text-danger mt-1" style="font-size: 0.55rem;">${step.strategy}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+        }
+
+        function drawExposureChart(tryAssets, usdAssets, goldAssets) {
+            const canvas = document.getElementById('exposureChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            if (exposureChart) {
+                exposureChart.data.datasets[0].data = [tryAssets, usdAssets, goldAssets];
+                exposureChart.update();
+            } else {
+                exposureChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['TL Varlık', 'Döviz (USD/EUR)', 'Altın'],
+                        datasets: [{
+                            data: [tryAssets, usdAssets, goldAssets],
+                            backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        cutout: '75%'
+                    }
+                });
+            }
+        }
+
+        setupPremiumFeatures();
+    })();
+</script>

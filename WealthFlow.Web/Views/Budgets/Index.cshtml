@@ -1,0 +1,280 @@
+@model IEnumerable<WealthFlow.Application.DTOs.BudgetDto>
+@{
+    ViewData["Title"] = "Bütçeler";
+    ViewData["PageTitle"] = "Bütçe Planlama";
+    int currentMonth = ViewBag.SelectedMonth;
+    int currentYear = ViewBag.SelectedYear;
+}
+
+<!-- Month & Year Selector -->
+<div class="glass-card mb-4">
+    <form asp-controller="Budgets" asp-action="Index" method="get" class="row g-3 align-items-end justify-content-between">
+        <div class="col-auto">
+            <h2 class="card-title-custom">Aylık Bütçe Planı</h2>
+            <p class="text-muted">Aylık harcama limitlerinizi görerek tasarruf hedeflerinizi tutturun.</p>
+        </div>
+        
+        <div class="col-auto d-flex align-items-center gap-2">
+            @{
+                var prevMonth = currentMonth - 1;
+                var prevYear = currentYear;
+                if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+            }
+            <a asp-action="Index" asp-route-month="@prevMonth" asp-route-year="@prevYear" class="btn btn-outline-secondary btn-icon">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+
+            <select name="month" class="form-select w-auto" onchange="this.form.submit()">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    var culture = new System.Globalization.CultureInfo("tr-TR");
+                    var monthName = new DateTime(currentYear, m, 1).ToString("MMMM", culture);
+                    <option value="@m" selected="@(m == currentMonth ? "selected" : null)">@monthName</option>
+                }
+            </select>
+
+            <select name="year" class="form-select w-auto" onchange="this.form.submit()">
+                @for (int y = DateTime.Today.Year - 2; y <= DateTime.Today.Year + 2; y++)
+                {
+                    <option value="@y" selected="@(y == currentYear ? "selected" : null)">@y</option>
+                }
+            </select>
+
+            @{
+                var nextMonth = currentMonth + 1;
+                var nextYear = currentYear;
+                if (nextMonth > 12) { nextMonth = 1; nextYear++; }
+            }
+            <a asp-action="Index" asp-route-month="@nextMonth" asp-route-year="@nextYear" class="btn btn-outline-secondary btn-icon">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="row g-4">
+    <!-- Set New Budget Form -->
+    <div class="col-lg-4">
+        <div class="glass-card">
+            <h2 class="card-title-custom mb-3">Yeni Bütçe Tanımla</h2>
+            <p class="text-muted fs-8 mb-4">Bu ay için henüz bütçesi bulunmayan bir kategori seçip limit belirleyin.</p>
+            
+            <form id="createBudgetForm">
+                <input type="hidden" name="month" value="@currentMonth" />
+                <input type="hidden" name="year" value="@currentYear" />
+
+                <div class="mb-3">
+                    <label class="form-label">Kategori</label>
+                    <select name="categoryId" class="form-select" asp-items="ViewBag.CategoryId" required>
+                        <option value="">Seçiniz...</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Limit Tutarı (₺)</label>
+                    <input name="amount" type="number" step="0.01" class="form-control" placeholder="0.00" required min="0.01" />
+                </div>
+
+                <button type="submit" class="btn btn-indigo w-100" @(ViewBag.CategoryCount == 0 ? "disabled" : "")>
+                    <i class="fa-solid fa-circle-check me-2"></i>Bütçe Oluştur
+                </button>
+
+                @if (ViewBag.CategoryCount == 0)
+                {
+                    <small class="text-warning-light d-block text-center mt-2">
+                        Bu ay için tanımlanabilecek başka aktif kategori kalmadı!
+                    </small>
+                }
+            </form>
+        </div>
+    </div>
+
+    <!-- Active Budgets Table/List -->
+    <div class="col-lg-8">
+        <div class="glass-card">
+            <h2 class="card-title-custom mb-4">Aktif Bütçe Limitleri</h2>
+            
+            <div class="table-responsive">
+                <table class="table custom-table align-middle" id="budgetsTable">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th>Aylık Limit</th>
+                            <th class="text-center" style="width: 150px;">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr id="budget-row-@item.Id">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="category-icon-wrapper me-3" style="background-color: @(item.CategoryColor ?? "#6B7280")20; border: 1px solid @item.CategoryColor; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                                <i class="fa-solid @(item.CategoryIcon ?? "fa-tag")" style="color: @(item.CategoryColor ?? "#6B7280");"></i>
+                                            </div>
+                                            <div>
+                                                <span class="text-white fw-medium">@(item.CategoryName ?? "Bilinmeyen")</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div id="view-mode-@item.Id" class="d-flex align-items-center justify-content-between">
+                                            <span class="fw-semibold text-white fs-6">@item.Amount.ToString("C2", new System.Globalization.CultureInfo("tr-TR"))</span>
+                                            <button type="button" class="btn btn-link btn-sm text-indigo p-0 border-0" onclick="enableEditMode(@item.Id)">
+                                                <i class="fa-solid fa-pen-to-square"></i> Düzenle
+                                            </button>
+                                        </div>
+
+                                        <div id="edit-form-@item.Id" style="display: none;">
+                                            <div class="input-group input-group-sm">
+                                                <input id="amount-input-@item.Id" type="number" step="0.01" class="form-control text-white bg-dark border-secondary" value="@item.Amount" required min="0.01" />
+                                                <button type="button" class="btn btn-success" onclick="saveBudgetAmount(@item.Id)"><i class="fa-solid fa-check"></i></button>
+                                                <button type="button" class="btn btn-secondary" onclick="disableEditMode(@item.Id)"><i class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteBudget(@item.Id)">
+                                            <i class="fa-solid fa-trash me-1"></i>Kaldır
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr id="emptyRow">
+                                <td colspan="3" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-piggy-bank fs-1 mb-2 opacity-50"></i>
+                                    <p>Seçilen dönem için herhangi bir bütçe planlanmamış.</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function enableEditMode(id) {
+            document.getElementById('view-mode-' + id).style.display = 'none';
+            document.getElementById('edit-form-' + id).style.setProperty('display', 'block', 'important');
+        }
+
+        function disableEditMode(id) {
+            document.getElementById('view-mode-' + id).style.display = 'flex';
+            document.getElementById('edit-form-' + id).style.display = 'none';
+        }
+
+        // PUT call to edit budget amount (No page reload)
+        function saveBudgetAmount(id) {
+            const amountInput = document.getElementById(`amount-input-${id}`);
+            const newAmount = parseFloat(amountInput.value);
+
+            if (isNaN(newAmount) || newAmount <= 0) {
+                alert("Lütfen geçerli bir limit girin.");
+                return;
+            }
+
+            fetch(`/api/budgets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newAmount)
+            })
+            .then(res => {
+                if (res.ok) {
+                    const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+                    const viewSpan = document.querySelector(`#view-mode-${id} span`);
+                    viewSpan.textContent = formatter.format(newAmount);
+                    disableEditMode(id);
+                } else {
+                    alert("Bütçe güncellenirken hata oluştu.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Bağlantı hatası oluştu.");
+            });
+        }
+
+        // DELETE call to remove budget (No page reload)
+        function deleteBudget(id) {
+            if (confirm("Bu bütçe limitini silmek istediğinize emin misiniz?")) {
+                fetch(`/api/budgets/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(res => {
+                    if (res.ok) {
+                        const row = document.getElementById(`budget-row-${id}`);
+                        if (row) {
+                            row.style.transition = 'all 0.3s ease';
+                            row.style.opacity = '0';
+                            row.style.transform = 'translateX(-20px)';
+                            setTimeout(() => {
+                                row.remove();
+                                // Eğer tablo tamamen boşaldıysa "boş" satırı ekle
+                                const tbody = document.querySelector('#budgetsTable tbody');
+                                if (tbody.children.length === 0) {
+                                    tbody.innerHTML = `
+                                        <tr id="emptyRow">
+                                            <td colspan="3" class="text-center py-5 text-muted">
+                                                <i class="fa-solid fa-piggy-bank fs-1 mb-2 opacity-50"></i>
+                                                <p>Seçilen dönem için herhangi bir bütçe planlanmamış.</p>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }
+                            }, 300);
+                        }
+                    } else {
+                        alert("Bütçe silinemedi.");
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Bağlantı hatası.");
+                });
+            }
+        }
+
+        // POST call to create budget via Fetch
+        document.getElementById('createBudgetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const categorySelect = this.querySelector('select[name="categoryId"]');
+            const amountInput = this.querySelector('input[name="amount"]');
+            
+            const budgetData = {
+                categoryId: parseInt(categorySelect.value),
+                amount: parseFloat(amountInput.value),
+                month: parseInt(this.querySelector('input[name="month"]').value),
+                year: parseInt(this.querySelector('input[name="year"]').value)
+            };
+
+            fetch('/api/budgets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(budgetData)
+            })
+            .then(res => {
+                if (res.ok) {
+                    // Sayfayı yenileyerek listeyi tazelemek en garanti yöntemdir (kategori dropdown'ı da güncellenmeli)
+                    window.location.reload();
+                } else {
+                    res.json().then(data => {
+                        alert(data.errors ? data.errors.join('\n') : "Bütçe oluşturulamadı.");
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Bir hata oluştu.");
+            });
+        });
+    </script>
+}
